@@ -8,6 +8,22 @@ importers:
 
   .: {}
 
+  attestor:
+    dependencies:
+      '@primage/deal':
+        specifier: workspace:*
+        version: link:../packages/deal
+      viem:
+        specifier: 2.57.1
+        version: 2.57.1(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.6.0
+        version: 24.19.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/deal:
     dependencies:
       viem:

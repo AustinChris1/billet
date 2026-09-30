@@ -12,6 +12,7 @@ import {
   encodeDealFragment,
   encodeEvent,
   encodeTerms,
+  splitMemos,
   termsHash,
   type DealTerms,
 } from "../src/index.ts";
@@ -83,6 +84,25 @@ test("event memo round-trips", () => {
   const e = decodeEvent(memo);
   assert.equal(e.container, "KOCU4221161");
   assert.equal(e.milestone, "loaded");
+});
+
+test("splitMemos recovers each Primage memo from WebZjs's newline-joined history", () => {
+  const t = encodeTerms(terms);
+  const e = encodeEvent({
+    id: terms.id,
+    milestone: "arrived",
+    container: "KOCU4221161",
+    at: "2026-11-01T00:00:00Z",
+    locode: "USLAX",
+    vessel: "NYK THEMIS",
+    source: "shipping_line",
+    evidence: `0x${"ab".repeat(32)}`,
+    tx: `0x${"cd".repeat(32)}`,
+  });
+  const parts = splitMemos(["unrelated note", t, e].join("\n"));
+  assert.equal(parts.length, 2);
+  assert.equal(parts[0], t);
+  assert.equal(decodeEvent(parts[1]!).milestone, "arrived");
 });
 
 test("container hash is salted and case-insensitive", () => {

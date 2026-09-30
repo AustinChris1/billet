@@ -18,7 +18,7 @@ contract PrimageTest is Test {
     uint128 internal constant AMOUNT = 20_000e6;
     bytes32 internal constant SALT = keccak256("deal-1");
     bytes32 internal constant TERMS = keccak256("SC1 terms memo");
-    bytes32 internal constant CONTAINER = keccak256("salt|KOCU4221161");
+    bytes32 internal constant SHIPMENT = keccak256("salt|KOCU4221161");
     bytes32 internal constant EVIDENCE = keccak256("t49 webhook body");
 
     uint40 internal shipBy;
@@ -41,7 +41,7 @@ contract PrimageTest is Test {
             attestor: attestor,
             token: address(usd),
             amount: AMOUNT,
-            loadedBps: 8_000,
+            dispatchBps: 8_000,
             shipBy: shipBy,
             arriveBy: arriveBy,
             termsHash: TERMS
@@ -56,7 +56,7 @@ contract PrimageTest is Test {
     function _openAndBind() internal returns (bytes32 id) {
         id = _open();
         vm.prank(supplier);
-        lc.bindContainer(id, CONTAINER);
+        lc.bindShipment(id, SHIPMENT);
     }
 
     function test_open_locksFundsUnderDeterministicId() public {
@@ -104,12 +104,12 @@ contract PrimageTest is Test {
 
         vm.warp(block.timestamp + 5 days);
         vm.prank(attestor);
-        lc.attestLoaded(id, uint40(block.timestamp - 1 hours), EVIDENCE);
+        lc.attestDispatched(id, uint40(block.timestamp - 1 hours), EVIDENCE);
         assertEq(usd.balanceOf(supplier), 16_000e6);
 
         vm.warp(block.timestamp + 30 days);
         vm.prank(attestor);
-        lc.attestArrived(id, uint40(block.timestamp - 1 hours), EVIDENCE);
+        lc.attestDelivered(id, uint40(block.timestamp - 1 hours), EVIDENCE);
         assertEq(usd.balanceOf(supplier), AMOUNT);
         assertEq(usd.balanceOf(address(lc)), 0);
         assertEq(uint8(lc.credit(id).stage), uint8(Primage.Stage.Closed));
@@ -117,14 +117,14 @@ contract PrimageTest is Test {
 
     function test_fullTrancheOnLoading_closesImmediately() public {
         Primage.Terms memory t = _terms();
-        t.loadedBps = 10_000;
+        t.dispatchBps = 10_000;
         vm.prank(buyer);
         bytes32 id = lc.open(SALT, t);
         vm.prank(supplier);
-        lc.bindContainer(id, CONTAINER);
+        lc.bindShipment(id, SHIPMENT);
 
         vm.prank(attestor);
-        lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+        lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
         assertEq(usd.balanceOf(supplier), AMOUNT);
         assertEq(uint8(lc.credit(id).stage), uint8(Primage.Stage.Closed));
     }
@@ -133,14 +133,14 @@ contract PrimageTest is Test {
         bytes32 id = _openAndBind();
         vm.prank(stranger);
         vm.expectRevert(Primage.NotAttestor.selector);
-        lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+        lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
     }
 
     function test_attest_requiresBoundContainer() public {
         bytes32 id = _open();
         vm.prank(attestor);
-        vm.expectRevert(Primage.NoContainer.selector);
-        lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+        vm.expectRevert(Primage.NoShipment.selector);
+        lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
     }
 
     function test_attest_rejectsLoadingAfterLatestShipmentDate() public {
@@ -148,14 +148,14 @@ contract PrimageTest is Test {
         vm.warp(shipBy + 2 days);
         vm.prank(attestor);
         vm.expectRevert(Primage.EventTooLate.selector);
-        lc.attestLoaded(id, shipBy + 1, EVIDENCE);
+        lc.attestDispatched(id, shipBy + 1, EVIDENCE);
     }
 
     function test_attest_acceptsOnTimeLoadingReportedLate() public {
         bytes32 id = _openAndBind();
         vm.warp(shipBy + 2 days);
         vm.prank(attestor);
-        lc.attestLoaded(id, shipBy - 1, EVIDENCE);
+        lc.attestDispatched(id, shipBy - 1, EVIDENCE);
         assertEq(usd.balanceOf(supplier), 16_000e6);
     }
 
@@ -163,9 +163,9 @@ contract PrimageTest is Test {
         bytes32 id = _openAndBind();
         vm.startPrank(attestor);
         vm.expectRevert(Primage.EventInFuture.selector);
-        lc.attestLoaded(id, uint40(block.timestamp + 1), EVIDENCE);
+        lc.attestDispatched(id, uint40(block.timestamp + 1), EVIDENCE);
         vm.expectRevert(Primage.NoEvidence.selector);
-        lc.attestLoaded(id, uint40(block.timestamp), bytes32(0));
+        lc.attestDispatched(id, uint40(block.timestamp), bytes32(0));
         vm.stopPrank();
     }
 
@@ -173,37 +173,37 @@ contract PrimageTest is Test {
         bytes32 id = _openAndBind();
         vm.prank(attestor);
         vm.expectRevert(Primage.WrongStage.selector);
-        lc.attestArrived(id, uint40(block.timestamp), EVIDENCE);
+        lc.attestDelivered(id, uint40(block.timestamp), EVIDENCE);
     }
 
     function test_bind_onlySupplierAndOnlyOnce() public {
         bytes32 id = _open();
         vm.prank(stranger);
         vm.expectRevert(Primage.NotSupplier.selector);
-        lc.bindContainer(id, CONTAINER);
+        lc.bindShipment(id, SHIPMENT);
 
         vm.prank(supplier);
-        lc.bindContainer(id, CONTAINER);
+        lc.bindShipment(id, SHIPMENT);
         vm.prank(supplier);
-        vm.expectRevert(Primage.ContainerAlreadyBound.selector);
-        lc.bindContainer(id, keccak256("other"));
+        vm.expectRevert(Primage.ShipmentAlreadyBound.selector);
+        lc.bindShipment(id, keccak256("other"));
     }
 
     function test_bindBySig_relayedByAnyone() public {
         bytes32 id = _open();
-        bytes32 digest = _bindDigest(id, CONTAINER);
+        bytes32 digest = _bindDigest(id, SHIPMENT);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(supplierKey, digest);
 
         vm.prank(stranger);
-        lc.bindContainerBySig(id, CONTAINER, abi.encodePacked(r, s, v));
-        assertEq(lc.credit(id).containerHash, CONTAINER);
+        lc.bindShipmentBySig(id, SHIPMENT, abi.encodePacked(r, s, v));
+        assertEq(lc.credit(id).shipmentHash, SHIPMENT);
     }
 
     function test_bindBySig_rejectsOtherSigner() public {
         bytes32 id = _open();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xB0B, _bindDigest(id, CONTAINER));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xB0B, _bindDigest(id, SHIPMENT));
         vm.expectRevert(Primage.BadSignature.selector);
-        lc.bindContainerBySig(id, CONTAINER, abi.encodePacked(r, s, v));
+        lc.bindShipmentBySig(id, SHIPMENT, abi.encodePacked(r, s, v));
     }
 
     function test_refund_afterShipByPlusGrace() public {
@@ -222,7 +222,7 @@ contract PrimageTest is Test {
     function test_refund_remainderAfterArriveByPlusGrace() public {
         bytes32 id = _openAndBind();
         vm.prank(attestor);
-        lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+        lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
 
         vm.warp(arriveBy + lc.GRACE() + 1);
         lc.refund(id);
@@ -290,24 +290,24 @@ contract PrimageTest is Test {
     function testFuzz_fundsOnlyReachBuyerOrSupplier(uint16 bps, uint8 path, uint32 skew) public {
         bps = uint16(bound(bps, 0, 10_000));
         Primage.Terms memory t = _terms();
-        t.loadedBps = bps;
+        t.dispatchBps = bps;
         vm.prank(buyer);
         bytes32 id = lc.open(SALT, t);
         vm.prank(supplier);
-        lc.bindContainer(id, CONTAINER);
+        lc.bindShipment(id, SHIPMENT);
 
         uint256 p = path % 4;
         if (p == 0) {
             vm.prank(attestor);
-            lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+            lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
             if (bps < 10_000) {
                 vm.warp(block.timestamp + 1 + (skew % 30 days));
                 vm.prank(attestor);
-                lc.attestArrived(id, uint40(block.timestamp), EVIDENCE);
+                lc.attestDelivered(id, uint40(block.timestamp), EVIDENCE);
             }
         } else if (p == 1) {
             vm.prank(attestor);
-            lc.attestLoaded(id, uint40(block.timestamp), EVIDENCE);
+            lc.attestDispatched(id, uint40(block.timestamp), EVIDENCE);
             if (bps < 10_000) {
                 vm.warp(arriveBy + lc.GRACE() + 1 + skew);
                 lc.refund(id);
@@ -326,7 +326,7 @@ contract PrimageTest is Test {
         assertEq(usd.balanceOf(stranger), 0);
     }
 
-    function _bindDigest(bytes32 id, bytes32 containerHash) internal view returns (bytes32) {
+    function _bindDigest(bytes32 id, bytes32 shipmentHash) internal view returns (bytes32) {
         (, string memory name, string memory version, uint256 chainId, address verifying,,) = lc.eip712Domain();
         bytes32 domain = keccak256(
             abi.encode(
@@ -338,7 +338,7 @@ contract PrimageTest is Test {
             )
         );
         bytes32 structHash =
-            keccak256(abi.encode(keccak256("BindContainer(bytes32 id,bytes32 containerHash)"), id, containerHash));
+            keccak256(abi.encode(keccak256("BindShipment(bytes32 id,bytes32 shipmentHash)"), id, shipmentHash));
         return keccak256(abi.encodePacked("\x19\x01", domain, structHash));
     }
 }

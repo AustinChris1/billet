@@ -149,6 +149,22 @@ export function decodeEvent(text: string): DealEvent {
   };
 }
 
+/** WebZjs joins every text memo in a transaction with "\n", so split on our headers rather than trust that separator. */
+export function splitMemos(joined: string): string[] {
+  const out: string[] = [];
+  let current: string[] | null = null;
+  for (const line of joined.split("\n")) {
+    if (line === TERMS_HEADER || line === EVENT_HEADER) {
+      if (current) out.push(current.join("\n"));
+      current = [line];
+    } else if (current) {
+      current.push(line);
+    }
+  }
+  if (current) out.push(current.join("\n"));
+  return out;
+}
+
 export function isContainerNumber(value: string): boolean {
   return CONTAINER.test(value.trim().toUpperCase());
 }

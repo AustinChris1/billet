@@ -6,9 +6,9 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ITIP20} from "./ITIP20.sol";
 
 /// @title Primage
-/// @notice A letter of credit for stablecoin trade payments. The buyer locks TIP-20 dollars against one
-/// shipment; the named attestor releases them in two tranches on carrier events (vessel loaded, then
-/// arrived). Funds can only ever leave to the credit's supplier or back to its buyer.
+/// @notice A letter of credit for stablecoin payments. The buyer locks TIP-20 dollars against one
+/// shipment; the named attestor releases them in two tranches on carrier tracking events (dispatched, then
+/// delivered). Funds can only ever leave to the credit's supplier or back to its buyer.
 contract Primage is EIP712 {
     uint256 public constant GRACE = 3 days;
     uint16 public constant BPS = 10_000;
@@ -16,7 +16,7 @@ contract Primage is EIP712 {
     enum Stage {
         None,
         Open,
-        Loaded,
+        Dispatched,
         Closed
     }
 
@@ -25,7 +25,7 @@ contract Primage is EIP712 {
         address attestor;
         address token;
         uint128 amount;
-        uint16 loadedBps;
+        uint16 dispatchBps;
         uint40 shipBy;
         uint40 arriveBy;
         bytes32 termsHash;
@@ -35,7 +35,7 @@ contract Primage is EIP712 {
         address buyer;
         uint40 shipBy;
         uint40 arriveBy;
-        uint16 loadedBps;
+        uint16 dispatchBps;
         Stage stage;
         address supplier;
         address attestor;
@@ -43,10 +43,10 @@ contract Primage is EIP712 {
         uint128 amount;
         uint128 settled;
         bytes32 termsHash;
-        bytes32 containerHash;
+        bytes32 shipmentHash;
     }
 
-    bytes32 private constant BIND_TYPEHASH = keccak256("BindContainer(bytes32 id,bytes32 containerHash)");
+    bytes32 private constant BIND_TYPEHASH = keccak256("BindShipment(bytes32 id,bytes32 shipmentHash)");
 
     mapping(bytes32 id => Credit) private _credits;
 
@@ -57,14 +57,14 @@ contract Primage is EIP712 {
         address attestor,
         address token,
         uint256 amount,
-        uint16 loadedBps,
+        uint16 dispatchBps,
         uint40 shipBy,
         uint40 arriveBy,
         bytes32 termsHash
     );
-    event ContainerBound(bytes32 indexed id, bytes32 containerHash);
-    event Loaded(bytes32 indexed id, uint40 eventTime, bytes32 evidenceHash, uint256 paid);
-    event Arrived(bytes32 indexed id, uint40 eventTime, bytes32 evidenceHash, uint256 paid);
+    event ShipmentBound(bytes32 indexed id, bytes32 shipmentHash);
+    event Dispatched(bytes32 indexed id, uint40 eventTime, bytes32 evidenceHash, uint256 paid);
+    event Delivered(bytes32 indexed id, uint40 eventTime, bytes32 evidenceHash, uint256 paid);
     event ReleasedByBuyer(bytes32 indexed id, uint256 paid);
     event DeclinedBySupplier(bytes32 indexed id, uint256 refunded);
     event Refunded(bytes32 indexed id, uint256 refunded);
@@ -75,8 +75,8 @@ contract Primage is EIP712 {
     error NotBuyer();
     error NotSupplier();
     error NotAttestor();
-    error NoContainer();
-    error ContainerAlreadyBound();
+    error NoShipment();
+    error ShipmentAlreadyBound();
     error BadSignature();
     error EventTooLate();
     error EventInFuture();
@@ -107,37 +107,37 @@ contract Primage is EIP712 {
         id = _open(salt, t);
     }
 
-    function bindContainer(bytes32 id, bytes32 containerHash) external {
+    function bindShipment(bytes32 id, bytes32 shipmentHash) external {
         if (msg.sender != _credits[id].supplier) revert NotSupplier();
-        _bind(id, containerHash);
+        _bind(id, shipmentHash);
     }
 
     /// @notice Lets a supplier with no fee tokens sign the binding while anyone relays it.
-    function bindContainerBySig(bytes32 id, bytes32 containerHash, bytes calldata signature) external {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(BIND_TYPEHASH, id, containerHash)));
+    function bindShipmentBySig(bytes32 id, bytes32 shipmentHash, bytes calldata signature) external {
+        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(BIND_TYPEHASH, id, shipmentHash)));
         if (ECDSA.recover(digest, signature) != _credits[id].supplier) revert BadSignature();
-        _bind(id, containerHash);
+        _bind(id, shipmentHash);
     }
 
-    function attestLoaded(bytes32 id, uint40 eventTime, bytes32 evidenceHash) external {
+    function attestDispatched(bytes32 id, uint40 eventTime, bytes32 evidenceHash) external {
         Credit storage c = _credits[id];
         _checkAttestation(c, Stage.Open, eventTime, c.shipBy, evidenceHash);
 
-        uint128 pay = uint128((uint256(c.amount) * c.loadedBps) / BPS);
+        uint128 pay = uint128((uint256(c.amount) * c.dispatchBps) / BPS);
         c.settled = pay;
-        c.stage = c.loadedBps == BPS ? Stage.Closed : Stage.Loaded;
-        emit Loaded(id, eventTime, evidenceHash, pay);
+        c.stage = c.dispatchBps == BPS ? Stage.Closed : Stage.Dispatched;
+        emit Dispatched(id, eventTime, evidenceHash, pay);
         _send(c.token, c.supplier, pay, id);
     }
 
-    function attestArrived(bytes32 id, uint40 eventTime, bytes32 evidenceHash) external {
+    function attestDelivered(bytes32 id, uint40 eventTime, bytes32 evidenceHash) external {
         Credit storage c = _credits[id];
-        _checkAttestation(c, Stage.Loaded, eventTime, c.arriveBy, evidenceHash);
+        _checkAttestation(c, Stage.Dispatched, eventTime, c.arriveBy, evidenceHash);
 
         uint128 pay = c.amount - c.settled;
         c.settled = c.amount;
         c.stage = Stage.Closed;
-        emit Arrived(id, eventTime, evidenceHash, pay);
+        emit Delivered(id, eventTime, evidenceHash, pay);
         _send(c.token, c.supplier, pay, id);
     }
 
@@ -162,7 +162,7 @@ contract Primage is EIP712 {
         Credit storage c = _credits[id];
         uint256 deadline;
         if (c.stage == Stage.Open) deadline = c.shipBy;
-        else if (c.stage == Stage.Loaded) deadline = c.arriveBy;
+        else if (c.stage == Stage.Dispatched) deadline = c.arriveBy;
         else revert WrongStage();
         if (block.timestamp <= deadline + GRACE) revert NotRefundable();
 
@@ -175,7 +175,7 @@ contract Primage is EIP712 {
         if (
             t.supplier == address(0) || t.supplier == msg.sender || t.attestor == address(0)
                 || t.attestor == msg.sender || t.attestor == t.supplier || t.token == address(0) || t.amount == 0
-                || t.loadedBps > BPS || t.shipBy <= block.timestamp || t.arriveBy <= t.shipBy || t.termsHash == 0
+                || t.dispatchBps > BPS || t.shipBy <= block.timestamp || t.arriveBy <= t.shipBy || t.termsHash == 0
         ) revert InvalidTerms();
 
         id = creditId(msg.sender, salt);
@@ -185,7 +185,7 @@ contract Primage is EIP712 {
         c.buyer = msg.sender;
         c.shipBy = t.shipBy;
         c.arriveBy = t.arriveBy;
-        c.loadedBps = t.loadedBps;
+        c.dispatchBps = t.dispatchBps;
         c.stage = Stage.Open;
         c.supplier = t.supplier;
         c.attestor = t.attestor;
@@ -194,18 +194,18 @@ contract Primage is EIP712 {
         c.termsHash = t.termsHash;
 
         emit Opened(
-            id, msg.sender, t.supplier, t.attestor, t.token, t.amount, t.loadedBps, t.shipBy, t.arriveBy, t.termsHash
+            id, msg.sender, t.supplier, t.attestor, t.token, t.amount, t.dispatchBps, t.shipBy, t.arriveBy, t.termsHash
         );
         if (!ITIP20(t.token).transferFromWithMemo(msg.sender, address(this), t.amount, id)) revert TransferFailed();
     }
 
-    function _bind(bytes32 id, bytes32 containerHash) internal {
+    function _bind(bytes32 id, bytes32 shipmentHash) internal {
         Credit storage c = _credits[id];
         if (c.stage != Stage.Open) revert WrongStage();
-        if (c.containerHash != 0) revert ContainerAlreadyBound();
-        if (containerHash == 0) revert NoContainer();
-        c.containerHash = containerHash;
-        emit ContainerBound(id, containerHash);
+        if (c.shipmentHash != 0) revert ShipmentAlreadyBound();
+        if (shipmentHash == 0) revert NoShipment();
+        c.shipmentHash = shipmentHash;
+        emit ShipmentBound(id, shipmentHash);
     }
 
     function _checkAttestation(Credit storage c, Stage expected, uint40 eventTime, uint40 deadline, bytes32 evidence)
@@ -214,14 +214,14 @@ contract Primage is EIP712 {
     {
         if (msg.sender != c.attestor) revert NotAttestor();
         if (c.stage != expected) revert WrongStage();
-        if (c.containerHash == 0) revert NoContainer();
+        if (c.shipmentHash == 0) revert NoShipment();
         if (evidence == 0) revert NoEvidence();
         if (eventTime > deadline) revert EventTooLate();
         if (eventTime > block.timestamp) revert EventInFuture();
     }
 
     function _close(Credit storage c) internal returns (uint128 remaining) {
-        if (c.stage != Stage.Open && c.stage != Stage.Loaded) revert WrongStage();
+        if (c.stage != Stage.Open && c.stage != Stage.Dispatched) revert WrongStage();
         remaining = c.amount - c.settled;
         c.settled = c.amount;
         c.stage = Stage.Closed;

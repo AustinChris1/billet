@@ -1,8 +1,13 @@
 # Billet
 
-**A private dollar invoice.** The invoice is sealed in one shielded Zcash note. The client pays in OUSD on Tempo. One link is both the invoice and the receipt, and it opens that invoice and nothing else.
+**Private invoice. Public payment. One link.**
 
-Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks). **Live: https://billet-zec.vercel.app**
+Your invoice is sealed in one shielded Zcash note. Your client pays it in OUSD on Tempo. The link you send proves the payment and the invoice are the same, then becomes the receipt. No invoice database. No viewing key.
+
+Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
+
+- **Live app:** https://billet-zec.vercel.app
+- **A real billet, sealed on Zcash mainnet and paid on Tempo:** [open it](https://billet-zec.vercel.app/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA). Every check runs in your browser; expand "How this was checked".
 
 ---
 
@@ -20,6 +25,7 @@ You invoice a client and want to be paid in dollars on-chain. Today you choose b
 3. **Send the link.** It carries a delivery proof for that one note and the transaction id. No key.
 4. **Your client opens it.** Their browser fetches the Zcash transaction, checks the proof against its bytes, and shows the invoice word for word. They pay in OUSD on Tempo with one click. The payment's memo is the invoice's id.
 5. **The same link becomes the receipt.** It looks up the Tempo payment carrying that id. The PAID stamp only lands once the payment is found on chain.
+6. **Come back to it.** Every invoice you sealed is listed in your browser with paid or unpaid read live from Tempo, the total still owed, and one click to invoice the same client again. Links go out by WhatsApp, email or the phone's share sheet.
 
 ## How the pieces bind together
 

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
 import { buildZip321 } from "@siwz/core";
-import { Copy as CopyIcon, KeyRound, Link2, QrCode, Smartphone } from "lucide-react";
+import { Copy as CopyIcon, KeyRound, Link2, Mail, MessageCircle, QrCode, Share2, Smartphone } from "lucide-react";
 import { createPublicClient, http, type Chain } from "viem";
 import { tempo, tempoModerato } from "viem/chains";
 import {
   byteLength,
+  decodeInvoice,
   encodeInvoice,
+  toUnits,
   encodeLink,
   getLatestHeight,
   InvoiceError,
@@ -18,11 +20,12 @@ import {
   type Invoice,
 } from "@billet/core";
 import { Button, Copy, Serial } from "../components/paper.tsx";
-import { Ledger } from "../components/Ledger.tsx";
+import { Ledger, type RepeatInvoice } from "../components/Ledger.tsx";
 import { Frame } from "./BilletPage.tsx";
 import { issueChain, lightwalletdProxies, OUSD, SEAL_AMOUNT_ZEC } from "../lib/config.ts";
 import { addIssued, loadPending, loadProfile, savePending, saveProfile, type PendingSeal } from "../lib/ledger.ts";
 import { proofLib } from "../lib/proof.ts";
+import { usd } from "../lib/useBillet.ts";
 import { connectWallet } from "../lib/tempo.ts";
 import { createIssuer, loadIssuer, zcashSupported, type Issuer } from "../lib/zcash.ts";
 
@@ -160,6 +163,24 @@ export function IssuePage() {
     setManualTxid("");
     setForm((f) => ({ ...f, to: "", work: "", amount: "", due: inTwoWeeks() }));
   }
+
+  function repeat(r: RepeatInvoice) {
+    startOver();
+    setForm((f) => ({ ...f, to: r.to, work: r.work, amount: r.amount, due: inTwoWeeks() }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // The message people actually send: who, how much, for what, by when, and the link.
+  const shareText = useMemo(() => {
+    if (!linkUrl || !pending) return "";
+    try {
+      const inv = decodeInvoice(pending.memo);
+      const due = new Date(`${inv.due}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
+      return `${inv.from}: invoice for ${usd(toUnits(inv.amount))}, ${inv.work}, due ${due}. Pay here: ${linkUrl}`;
+    } catch {
+      return linkUrl;
+    }
+  }, [linkUrl, pending]);
 
   function copy(text: string, tag: string) {
     navigator.clipboard.writeText(text).then(() => setCopied(tag));
@@ -319,6 +340,20 @@ export function IssuePage() {
                     <CopyIcon className="h-4 w-4" />
                     {copied === "link" ? "Copied" : "Copy link"}
                   </Button>
+                  <Button kind="quiet" href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}>
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </Button>
+                  <Button kind="quiet" href={`mailto:?subject=${encodeURIComponent("Invoice")}&body=${encodeURIComponent(shareText)}`}>
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </Button>
+                  {typeof navigator !== "undefined" && "share" in navigator && (
+                    <Button kind="quiet" onClick={() => navigator.share({ text: shareText }).catch(() => undefined)}>
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </Button>
+                  )}
                   <Button kind="quiet" href={linkUrl}>
                     <Link2 className="h-4 w-4" />
                     Open the billet
@@ -338,7 +373,7 @@ export function IssuePage() {
           </p>
         )}
 
-        <Ledger refreshKey={issuedVersion} />
+        <Ledger refreshKey={issuedVersion} onRepeat={repeat} />
       </div>
     </Frame>
   );

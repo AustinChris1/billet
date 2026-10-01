@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Clock, Copy as CopyIcon, ExternalLink } from "lucide-react";
+import { Check, Clock, Copy as CopyIcon, ExternalLink, RotateCcw } from "lucide-react";
 import { billetId, decodeInvoice, paymentStatus, toUnits, type SealedInvoice } from "@billet/core";
 import { chainById } from "../lib/config.ts";
 import { loadIssued, type IssuedBillet } from "../lib/ledger.ts";
@@ -25,7 +25,13 @@ function toRow(b: IssuedBillet): Row | null {
 }
 
 /** The issuer's own book of billets. Payment state is read live from Tempo; the invoices themselves never left this browser. */
-export function Ledger({ refreshKey }: { refreshKey?: unknown }) {
+export interface RepeatInvoice {
+  to: string;
+  work: string;
+  amount: string;
+}
+
+export function Ledger({ refreshKey, onRepeat }: { refreshKey?: unknown; onRepeat?: (r: RepeatInvoice) => void }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -86,6 +92,19 @@ export function Ledger({ refreshKey }: { refreshKey?: unknown }) {
               {r.state === "error" && <span className="text-sheet-ink">Tempo unreachable</span>}
             </div>
             <div className="flex items-center gap-3">
+              {onRepeat && (
+                <button
+                  onClick={() => {
+                    const inv = decodeInvoice(r.memo);
+                    onRepeat({ to: inv.to, work: inv.work, amount: inv.amount });
+                  }}
+                  className="text-sheet-ink hover:text-carbon"
+                  aria-label={`Invoice ${r.to} again`}
+                  title="Invoice this client again"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              )}
               <button
                 onClick={() => navigator.clipboard.writeText(r.url).then(() => setCopied(r.url))}
                 className="text-sheet-ink hover:text-carbon"

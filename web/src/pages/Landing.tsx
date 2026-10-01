@@ -143,11 +143,11 @@ export function Landing() {
                 className="text-[clamp(2.6rem,7vw,5.4rem)] leading-[0.95] font-[800] tracking-[-0.035em]"
                 style={{ fontVariationSettings: '"wdth" 108' }}
               >
-                An invoice only its link can open.
+                Private invoice. Public payment. One link.
               </h1>
               <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-sheet-ink">
-                Billet seals your invoice in one shielded Zcash note and gets you paid in dollars on Tempo. The link you send proves
-                both, and opens nothing else: not your wallet, not your other clients.
+                Your invoice is sealed in one shielded Zcash note. Your client pays it in OUSD on Tempo. The link you send proves the
+                payment and the invoice are the same, then becomes the receipt. No invoice database. No viewing key.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-4">
                 {SAMPLES[0] && (

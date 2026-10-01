@@ -1,59 +1,57 @@
-import initWasm, { initThreadPool, UnifiedSpendingKey, WebWallet } from "@zcashcommunitygrants/webzjs-wallet";
+import { getLatestHeight, withProxies } from "@billet/core";
+
+type WebZjs = typeof import("@zcashcommunitygrants/webzjs-wallet");
+const WEBZJS_URL = "/webzjs/webzjs_wallet.js";
 import { lightwalletdProxies } from "./config.ts";
 
 const NETWORK = "main";
+const STORE = "billet.issuer.v1";
 
-let wasmReady: Promise<void> | null = null;
-let walletPromise: Promise<WebWallet> | null = null;
+export interface Issuer {
+  /** Unified full viewing key: lets this browser find and prove its own sealed notes. Never leaves the device. */
+  ufvk: string;
+  /** The receive-only address invoices are sealed to. */
+  address: string;
+  createdAt: string;
+}
 
 export function zcashSupported(): boolean {
   return typeof SharedArrayBuffer !== "undefined" && crossOriginIsolated;
 }
 
-function initZcash(): Promise<void> {
-  wasmReady ??= (async () => {
-    if (!zcashSupported()) throw new Error("This page is not cross-origin isolated, so the Zcash reader cannot start.");
-    await initWasm();
-    await initThreadPool(Math.max(2, Math.min(navigator.hardwareConcurrency || 4, 8)));
-  })();
-  return wasmReady;
+export function loadIssuer(): Issuer | null {
+  try {
+    const raw = localStorage.getItem(STORE);
+    return raw ? (JSON.parse(raw) as Issuer) : null;
+  } catch {
+    return null;
+  }
 }
 
-// WebZjs allows one wallet per page, so every deal account lives in this single in-memory instance.
-async function wallet(): Promise<WebWallet> {
-  walletPromise ??= (async () => {
-    await initZcash();
-    let lastError: unknown;
-    for (const proxy of lightwalletdProxies) {
-      try {
-        const w = new WebWallet(NETWORK, proxy, 1, 1, null);
-        await w.get_latest_block();
-        return w;
-      } catch (err) {
-        lastError = err;
-      }
-    }
-    throw new Error(`No Zcash light wallet server answered: ${String(lastError)}`);
-  })();
-  walletPromise.catch(() => (walletPromise = null));
-  return walletPromise;
+export function forgetIssuer() {
+  try {
+    localStorage.removeItem(STORE);
+  } catch {
+    /* storage blocked */
+  }
 }
 
-export interface DealAccount {
-  /** ZIP 316 unified full viewing key: read-only access to this one deal. */
-  ufvk: string;
-  /** Unified address the terms note is sent to. */
-  address: string;
-  /** Chain height at creation; the reader scans only from here. */
-  birthday: number;
-}
+let wasm: Promise<WebZjs> | null = null;
 
 /**
- * Creates the one-deal account. The seed is random, used once to derive the viewing key, then wiped:
- * nobody, including this browser, can ever spend from the deal address.
+ * Creates the sealing address. The seed is random, used once to derive the viewing key, then wiped:
+ * nobody, including this browser, can ever spend from it, so the sealing dust is burned by design.
  */
-export async function createDealAccount(): Promise<DealAccount> {
-  const w = await wallet();
+export async function createIssuer(): Promise<Issuer> {
+  if (!zcashSupported()) throw new Error("This page is not cross-origin isolated, so the Zcash key library cannot start.");
+  wasm ??= (async () => {
+    const mod = (await import(/* @vite-ignore */ WEBZJS_URL)) as WebZjs;
+    await mod.default();
+    await mod.initThreadPool(Math.max(2, Math.min(navigator.hardwareConcurrency || 4, 8)));
+    return mod;
+  })();
+  const { UnifiedSpendingKey, WebWallet } = await wasm;
+
   const seed = crypto.getRandomValues(new Uint8Array(32));
   const usk = new UnifiedSpendingKey(NETWORK, seed, 0);
   seed.fill(0);
@@ -62,38 +60,24 @@ export async function createDealAccount(): Promise<DealAccount> {
   fvk.free();
   usk.free();
 
-  const birthday = Number(await w.get_latest_block());
-  const account = await w.create_account_view_ufvk(`deal-${birthday}`, ufvk, birthday);
-  const address = await w.get_current_address(account);
-  return { ufvk, address, birthday };
-}
-
-export interface DealMemo {
-  txid: string;
-  height: number | undefined;
-  confirmations: number;
-  memo: string;
-}
-
-const imported = new Map<string, number>();
-
-/** Imports the viewing key (view-only), syncs from the birthday, and returns every text memo it can decrypt. */
-export async function readDealMemos(ufvk: string, birthday: number): Promise<DealMemo[]> {
-  const w = await wallet();
-  let account = imported.get(ufvk);
-  if (account === undefined) {
-    account = await w.create_account_view_ufvk("deal", ufvk, Math.max(1, birthday - 1));
-    imported.set(ufvk, account);
+  let lastError: unknown;
+  for (const proxy of lightwalletdProxies) {
+    try {
+      const wallet = new WebWallet(NETWORK, proxy, 1, 1, null);
+      const birthday = await withProxies([proxy], getLatestHeight);
+      const account = await wallet.create_account_view_ufvk("billet", ufvk, birthday);
+      const address = await wallet.get_current_address(account);
+      wallet.free();
+      const issuer = { ufvk, address, createdAt: new Date().toISOString() };
+      try {
+        localStorage.setItem(STORE, JSON.stringify(issuer));
+      } catch {
+        /* storage blocked: the issuer lives for this session only */
+      }
+      return issuer;
+    } catch (err) {
+      lastError = err;
+    }
   }
-  await w.sync();
-  const history = await w.get_transaction_history(account, 100, 0);
-  const entries = history.transactions as {
-    txid: string;
-    memo?: string;
-    block_height?: number;
-    confirmations: number;
-  }[];
-  return entries
-    .filter((e) => typeof e.memo === "string" && e.memo.length > 0)
-    .map((e) => ({ txid: e.txid, height: e.block_height, confirmations: e.confirmations, memo: e.memo! }));
+  throw new Error(`No Zcash light wallet server answered: ${String(lastError)}`);
 }

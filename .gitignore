@@ -5,10 +5,7 @@ dist/
 *.log
 .DS_Store
 
-# foundry
-contracts/out/
-contracts/cache/
-contracts/broadcast/*/31337/
-
-# attestor state
-attestor/data/
+web/public/webzjs/
+.impeccable/review/
+.impeccable/build/
+keys/

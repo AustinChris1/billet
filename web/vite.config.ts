@@ -14,7 +14,7 @@ export default defineConfig({
   preview: { port: 4173, headers: isolation },
   worker: { format: "es" },
   optimizeDeps: {
-    exclude: ["@zcashcommunitygrants/webzjs-wallet"],
+    exclude: ["@zcashcommunitygrants/webzjs-wallet", "zcash-delivery-proof-wasm"],
   },
   build: { target: "es2022" },
 });

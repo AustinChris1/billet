@@ -8,57 +8,54 @@ web
 
 ## Users
 
-Anyone who pays a stranger in stablecoins for something physical that a courier or shipping line carries. Two sides, weighted equally in the app:
+Two sides, weighted equally:
 
-- **Buyers**: people and small businesses paying for goods in USDT (P2P sellers in crypto communities, online merchants, importers paying overseas factories). They open and fund the credit.
-- **Sellers**: whoever ships the goods. They see the money is locked before shipping, then register the tracking number.
+- **Issuers**: freelancers, contractors and small businesses who invoice clients and want to be paid in dollars on Tempo, without the client's name and the work description ending up public or in someone else's database.
+- **Payers**: the client who opens the invoice link, checks it, and pays in OUSD (or another USD stablecoin) on Tempo from an ordinary wallet.
 
-Also: hackathon judges (Colosseum Crypto World's Fair, Tempo and Zcash tracks) evaluating the product from the landing page and a sample deal.
+Also: anyone the issuer or payer hands the link to (an accountant, an auditor), and hackathon judges (Colosseum Crypto World's Fair, Zcash and Tempo tracks) who open sample links.
 
 ## Product Purpose
 
-A letter of credit for stablecoin payments. The buyer locks dollars on Tempo; the money moves to the seller in two steps when the carrier's own tracking data says the item was dispatched and then delivered, or goes back to the buyer if nothing ships in time. The private terms of the deal live in one shielded Zcash note, readable only with a one-deal viewing key. Success: two strangers can trade a physical item for stablecoins without either one having to trust the other.
+Billet is a private dollar invoice. The invoice text (who, for what, how much, pay where) is sealed in one shielded Zcash note. The client pays OUSD on Tempo with the invoice's id as the transfer memo. One link is both the invoice and the receipt: it carries a delivery proof of that one note, checks it against the chain in the browser, then shows whether the Tempo payment with that id has arrived. Success: an invoice that is verifiable, payable in one click, and shows nothing to anyone without the link.
 
 ## Positioning
 
-Money that only ever has two possible destinations (seller or buyer), released by tracking events neither party controls, with the deal terms private from the public but provable to anyone the parties choose. Existing stablecoin rails move money fast but offer no protection; bank letters of credit protect but are slow, costly and closed to small deals.
+The link carries a proof, not a key. A viewing key opens a whole account forever and cannot be revoked; a delivery proof opens exactly one note. Payment processors such as CipherPay ask the merchant for a viewing key; Billet never holds one from the user. The Tempo payment is bound to the private invoice because its memo is the keccak256 of the invoice text.
 
 ## Operating Context
 
-- Parcels: courier tracking via 17TRACK (3,300+ carriers, HMAC-signed webhooks). Milestones: dispatched, delivered.
-- Ocean containers: carrier events via Terminal49 (HMAC-signed webhooks). Milestones: vessel loaded at the port of loading, discharged at the port of discharge.
-- Money: TIP-20 stablecoins on Tempo (USDT0 on mainnet; AlphaUSD/pathUSD on the Moderato testnet). Every movement carries the credit id as its TIP-20 memo.
-- Deal file: a text memo (max 512 bytes) in a shielded Zcash note, sent to a fresh account whose seed is discarded in the browser; read back in the browser with ChainSafe WebZjs (view-only). Deal links carry the viewing key after `#`.
-- Buyers and sellers use ordinary EVM wallets (MetaMask) and, optionally, any Zcash wallet that scans ZIP 321 QR codes.
+- Sealing: the issuer's own Zcash wallet (Zashi/Zodl or any ZIP 321 wallet) scans a QR and sends a tiny shielded note to a receive-only address Billet created in the browser. The seed is discarded; the dust is never spent.
+- Proofs: zcash-delivery-proof (saplingcash, Apache-2.0, v0.1.0, not yet independently reviewed), WASM in the browser; raw transactions fetched over gRPC-web from public lightwalletd proxies.
+- Payment: TIP-20 `transferWithMemo` on Tempo; OUSD at `0x20c0000000000000000000006a37da5c996874be` (mainnet and Moderato). Fees are paid in the token itself.
+- Issuer address creation: ChainSafe WebZjs (view-only build, 5 MB) in the browser.
 
 ## Capabilities and Constraints
 
-- Contract: open, bind tracking (seller, or seller signature relayed), attest dispatched/loaded, attest delivered/arrived, buyer release, seller decline, refund to buyer after deadline plus 3 day grace. Deployed on Moderato; mainnet pending.
-- The attestor is one service run by Primage. A wrong attestation can pay the seller early; it can never send money anywhere else. Next step: TLSNotary proofs, then several attestors.
-- Primage sees every deal it runs (it needs the tracking number). Privacy is from the public, not from Primage.
-- The dollar amount on Tempo is public.
-- Tracking proves an item moved, not what is inside. Quality disputes are out of scope.
-- Zcash keys never touch a Primage server.
-- Undecided: fee model (a small per-credit fee is the plan, amount not set).
+- The OUSD amount, the payer and payee addresses and the memo hash are public on Tempo. Only the invoice text is private.
+- The issuer needs a little ZEC once per invoice (about 0.0001 ZEC plus the network fee) to seal it. The payer never needs ZEC.
+- A delivery proof shows the note's value, memo and receiver; it does not show who sent it or whether it was spent.
+- Losing the browser loses nothing already shared: links verify against the chain with no key.
+- Anyone holding a link can read that invoice; links are shared deliberately.
+- Undecided: business model (hosted watcher, paid tier) and a ZEC pay path for the client.
 
 ## Brand Commitments
 
-- Name: Primage (PRY-mij), the old payment to a ship's master for care of the cargo.
-- Voice: mixed by surface. Plain, exact trade language for buyers and sellers ("credit", "latest shipment date", "tranche"); protocol detail (escrow, attestor, viewing key, ZIPs) in a how-it-works layer for judges.
-- No em-dashes or en-dashes in any copy. Must not look like a generic AI landing page.
-- Every hackathon project gets a unique, meaning-rooted logo (user's standing rule).
+- Name: Billet (a short official note; also the ticket that assigns one soldier to one billet: one note, one place).
+- Voice: mixed by surface. Plain invoice language for issuers and payers; protocol detail (ZIP 321, delivery proofs, TIP-20 memos) in a how-it-works layer for judges.
+- No em-dashes or en-dashes anywhere. Must not look like a generic AI landing page.
+- Every hackathon project gets a unique, meaning-rooted logo.
 
 ## Evidence on Hand
 
-- Live testnet contract: Moderato `0x2b173855793810094961565e84080bd814F78557`; a full open, bind and loading attestation ran against real TIP-20 (80 of 100 AlphaUSD released with the credit id as memo).
-- Tests: 22 contract tests incl. a 512-run fuzz invariant (funds only reach buyer or seller), deal codec and attestor suites.
-- No customers, quotes, testimonials, logos or user counts exist. Never fabricate them. Demand evidence, if any, comes from conversations the founder runs in crypto communities before submission.
-- Market data allowed (sourced): McKinsey/Artemis real stablecoin payments ~$390B in 2025, B2B ~$226B; ADB trade finance gap $2.5T (context only).
+- Working mainnet pipeline: a real Ironwood transaction fetched over gRPC-web from both public proxies and its delivery proof checked in WASM; tampered proofs rejected.
+- No users, customers, quotes or testimonials. Never fabricate them.
+- Neighbours to acknowledge, not hide: zcash-delivery-proof (the library Billet uses), zeceipt (source-of-funds dossiers, same hackathon track), CipherPay (shielded ZEC checkout).
 
 ## Product Principles
 
-1. The money has exactly two exits. Every screen should make that obvious.
-2. Show the proof, not the promise: tx hashes, memos, evidence hashes, a real sample deal.
-3. Private from the public, honest about who sees what.
-4. Nothing to install and nothing to paste: links and QR codes, keys stay in the browser.
-5. Works for a $50 parcel and a $50,000 container with the same rules.
+1. A link opens one invoice and nothing else.
+2. Show the check, not a badge: every claim on screen is verified in the browser against the chain.
+3. Say plainly what is public (the Tempo payment) and what is private (the invoice).
+4. Nothing to paste, nothing to install for the payer.
+5. Nothing to lose: no wallet in Billet, no key in the link.

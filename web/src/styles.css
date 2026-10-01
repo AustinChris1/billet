@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "@fontsource-variable/archivo";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource/courier-prime/400.css";
+@import "@fontsource/courier-prime/700.css";
+
+@theme {
+  /* The carbonless set: white original, canary client copy, carbon impression, numbering-machine red. */
+  --color-canary: #f2d94e;
+  --color-canary-deep: #e6c935;
+  --color-canary-ink: #4f4416;
+  --color-sheet: #fcfbf6;
+  --color-sheet-ink: #5d5a52;
+  --color-carbon: #26389a;
+  --color-carbon-soft: #4b5bb0;
+  --color-serial: #c0232c;
+  --color-ink: #1a1915;
+  --color-chip: #b6b0a2;
+  --color-chip-deep: #8e887b;
+  --color-rule: #1a191526;
+
+  --font-form: "Archivo Variable", "Archivo", system-ui, sans-serif;
+  --font-type: "Courier Prime", "Courier New", monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-chip);
+    color: var(--color-ink);
+    font-family: var(--font-form);
+    font-variation-settings: "wdth" 100;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(120% 80% at 20% 0%, #c3bdaf 0%, transparent 60%),
+      var(--color-chip);
+  }
+  ::selection {
+    background: var(--color-carbon);
+    color: var(--color-canary);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-carbon);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+  input,
+  textarea,
+  select {
+    caret-color: var(--color-carbon);
+  }
+  html {
+    scrollbar-color: var(--color-chip-deep) var(--color-chip);
+  }
+}
+
+@layer components {
+  /* A row of punched holes, the tear line between stub and copy. */
+  .perforation {
+    background-image: radial-gradient(circle, var(--color-chip) 2.2px, transparent 2.6px);
+    background-size: 8px 11px;
+    background-repeat: repeat-y;
+    background-position: center top;
+  }
+  .perforation-x {
+    background-image: radial-gradient(circle, var(--color-chip) 2.2px, transparent 2.6px);
+    background-size: 11px 8px;
+    background-repeat: repeat-x;
+    background-position: left center;
+  }
+  .paper-shadow {
+    box-shadow:
+      0 1px 0 #00000014,
+      0 18px 40px -18px #3a35284d,
+      0 2px 6px -2px #3a352833;
+  }
+  .typed {
+    font-family: var(--font-type);
+    color: var(--color-carbon);
+    letter-spacing: 0.01em;
+  }
+  .form-label {
+    font-family: var(--font-form);
+    font-variation-settings: "wdth" 75;
+    font-weight: 600;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}

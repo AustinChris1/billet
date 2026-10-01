@@ -1,0 +1,220 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, Check } from "lucide-react";
+import { Button, Copy, Mark, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+
+const SAMPLES: string[] = (import.meta.env.VITE_SAMPLE_LINKS ?? "")
+  .split(",")
+  .map((s: string) => s.trim())
+  .filter(Boolean);
+
+const DEMO = [
+  ["From", "Ada Okafor"],
+  ["Bill to", "Jonas Weber"],
+  ["For", "Logo design, October"],
+  ["Amount", "$400.00 in OUSD"],
+] as const;
+
+/** The hero copy: lines are typed in black, turn carbon blue only once "checked", then the stamp lands. */
+function HeroCopy() {
+  const reduce = useReducedMotion();
+  const [checked, setChecked] = useState(reduce ? DEMO.length : 0);
+  useEffect(() => {
+    if (reduce) return;
+    const timers = DEMO.map((_, i) => setTimeout(() => setChecked(i + 1), 900 + i * 520));
+    return () => timers.forEach(clearTimeout);
+  }, [reduce]);
+  const done = checked >= DEMO.length;
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <div className="form-label text-canary-ink">Sample billet, illustrative</div>
+        <Serial id="0x3f1c9a7" />
+      </div>
+      <dl className="space-y-3.5">
+        {DEMO.map(([k, v], i) => {
+          const ok = i < checked;
+          return (
+            <div key={k} className="grid grid-cols-[6.5rem_1fr_1.25rem] items-baseline gap-3 border-b border-rule pb-2">
+              <dt className="form-label text-canary-ink">{k}</dt>
+              <dd className={`typed text-[1.05rem] transition-colors duration-500 ${ok ? "text-carbon" : "text-ink"}`}>{v}</dd>
+              <span className="self-center">{ok && <Check className="h-4 w-4 text-carbon" strokeWidth={3} />}</span>
+            </div>
+          );
+        })}
+      </dl>
+      <div className="mt-5 flex min-h-[5.5rem] items-center justify-end pr-2">{done && <Stamp sub="TEMPO" />}</div>
+    </div>
+  );
+}
+
+const STEPS = [
+  {
+    title: "Write",
+    body: "Who, for what, how much, pay where. One invoice, up to 512 bytes of text.",
+    tech: "Canonical text memo; its keccak256 is the billet id.",
+  },
+  {
+    title: "Seal",
+    body: "Your own Zcash wallet scans one QR and sends the invoice as a shielded note to an address nobody can spend from.",
+    tech: "ZIP 321 payment request; Orchard or Ironwood note; spending key discarded in the browser.",
+  },
+  {
+    title: "Pay",
+    body: "Your client pays in OUSD on Tempo from any EVM wallet. The fee comes out of the OUSD, so they need nothing else.",
+    tech: "TIP-20 transferWithMemo; memo = billet id.",
+  },
+  {
+    title: "Prove",
+    body: "The link opens the invoice and shows the payment, checked in the reader's browser against both chains.",
+    tech: "zcash-delivery-proof in WebAssembly; no viewing key anywhere in the link.",
+  },
+];
+
+export function Landing() {
+  const reduce = useReducedMotion();
+  return (
+    <div className="min-h-dvh">
+      <section className="bg-canary">
+        <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 pt-6 pb-10 sm:px-8">
+          <header className="flex items-center justify-between">
+            <Wordmark />
+            <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
+              <a href="#how" className="hidden underline decoration-ink/30 hover:text-carbon sm:inline">
+                How it works
+              </a>
+              <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
+                Write an invoice
+              </Link>
+            </nav>
+          </header>
+
+          <div className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[1.05fr_1fr]">
+            <div>
+              <h1
+                className="text-[clamp(2.6rem,7vw,5.4rem)] leading-[0.95] font-[800] tracking-[-0.035em]"
+                style={{ fontVariationSettings: '"wdth" 108' }}
+              >
+                An invoice only its link can open.
+              </h1>
+              <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-canary-ink">
+                Billet seals your invoice in one shielded Zcash note and gets you paid in dollars on Tempo. The link you send proves
+                both, and opens nothing else: not your wallet, not your other clients.
+              </p>
+              <div className="mt-9 flex flex-wrap items-center gap-4">
+                <Button href="/new">
+                  Write an invoice <ArrowRight className="h-4 w-4" />
+                </Button>
+                {SAMPLES[0] && (
+                  <Button kind="quiet" href={`/b${SAMPLES[0]}`}>
+                    Open a real sample
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <motion.div
+              initial={reduce ? false : { y: 24, rotate: 1.5, opacity: 0 }}
+              animate={{ y: 0, rotate: -1.2, opacity: 1 }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Copy
+                tone="canary"
+                className="ring-1 ring-ink/10"
+                stub={
+                  <div className="flex h-full flex-col justify-between text-canary-ink">
+                    <Mark className="h-8 w-8 text-ink" />
+                    <p className="text-[0.78rem] leading-snug">Client copy. Tear along the line, keep the stub.</p>
+                  </div>
+                }
+              >
+                <div className="bg-canary-deep p-6 sm:p-8">
+                  <HeroCopy />
+                </div>
+              </Copy>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-sheet">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-2">
+          <div>
+            <h2 className="text-[clamp(1.8rem,3.6vw,2.8rem)] leading-[1.02] font-[780] tracking-[-0.03em]">The link carries a proof, not a key.</h2>
+            <p className="mt-5 max-w-[56ch] text-[1.05rem] leading-relaxed text-sheet-ink">
+              A Zcash viewing key opens a whole account, forever, and cannot be taken back. Payment tools that ask for one see every
+              invoice you will ever receive. A billet link holds a delivery proof for one note, so whoever you send it to sees that
+              invoice, and the chain confirms it, and that is all.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="bg-canary p-5 paper-shadow">
+              <div className="form-label text-canary-ink">The link shows</div>
+              <ul className="typed mt-3 space-y-2 text-[0.95rem]">
+                <li>this invoice, word for word</li>
+                <li>when it was sealed on Zcash</li>
+                <li>the OUSD payment with its id</li>
+              </ul>
+            </div>
+            <div className="border border-ink/15 p-5">
+              <div className="form-label text-sheet-ink">Nobody sees</div>
+              <ul className="typed mt-3 space-y-2 text-[0.95rem] text-ink">
+                <li>your wallet or its balance</li>
+                <li>your other invoices</li>
+                <li>where you moved the money</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how" className="bg-chip">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
+          <h2 className="text-[clamp(1.8rem,3.6vw,2.8rem)] leading-[1.02] font-[780] tracking-[-0.03em]">Four sheets in one set</h2>
+          <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className={`paper-shadow flex flex-col p-6 ${i % 2 === 0 ? "bg-sheet" : "bg-canary"}`}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[1.4rem] font-[780] tracking-[-0.02em]">{s.title}</span>
+                  <span className="typed text-serial text-[0.95rem] font-bold">{i + 1}/4</span>
+                </div>
+                <p className="mt-3 flex-1 text-[0.98rem] leading-relaxed">{s.body}</p>
+                <p className="typed mt-5 border-t border-rule pt-3 text-[0.8rem] leading-snug text-carbon">{s.tech}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="bg-ink text-sheet">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-8 md:grid-cols-[1fr_1.2fr]">
+          <h2 className="text-[1.8rem] leading-tight font-[780] tracking-[-0.02em] text-canary">What stays public</h2>
+          <p className="max-w-[60ch] leading-relaxed text-sheet/85">
+            The payment is an ordinary Tempo transfer: its amount, both addresses and the billet id are on a public chain. Billet keeps
+            the words private, not the dollars. Sealing costs the issuer {"0.0001"} ZEC plus the network fee, once per invoice; the client
+            never needs ZEC.
+          </p>
+        </div>
+      </section>
+
+      <footer className="bg-chip">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-[0.85rem] text-ink/75 sm:px-8">
+          <span>Built for the Crypto World's Fair on Zcash and Tempo.</span>
+          <span>
+            Proofs by{" "}
+            <a className="underline" href="https://github.com/saplingcash/zcash-delivery-proof" target="_blank" rel="noreferrer">
+              zcash-delivery-proof
+            </a>{" "}
+            (Apache-2.0). Keys by{" "}
+            <a className="underline" href="https://github.com/ZcashCommunityGrants/WebZjs" target="_blank" rel="noreferrer">
+              WebZjs
+            </a>
+            .
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}

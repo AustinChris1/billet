@@ -4,19 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node ../scripts/sync-webzjs.mjs",
     "dev": "vite",
+    "prebuild": "node ../scripts/sync-webzjs.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fontsource-variable/hanken-grotesk": "^5.3.0",
-    "@fontsource-variable/newsreader": "^5.3.0",
-    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@billet/core": "workspace:*",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/courier-prime": "^5.3.0",
     "@siwz/core": "^0.2.3",
     "@zcashcommunitygrants/webzjs-wallet": "workspace:*",
-    "zcash-delivery-proof-wasm": "workspace:*",
     "framer-motion": "^13.4.6",
     "gsap": "^3.15.0",
     "lucide-react": "^1.49.0",
@@ -24,7 +24,8 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router": "^8.4.0",
-    "viem": "2.57.1"
+    "viem": "2.57.1",
+    "zcash-delivery-proof-wasm": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

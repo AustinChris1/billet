@@ -1,13 +1,13 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Wordmark } from "../components/paper.tsx";
+import { SiteFooter, SiteHeader } from "../components/site.tsx";
 import { stablecoins } from "@billet/core";
 
 
 function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="scroll-mt-24 pt-14 text-[1.9rem] leading-tight font-[780] tracking-[-0.025em] first:pt-0">
+    <h2 id={id} className="scroll-mt-24 pt-14 text-[1.9rem] leading-tight tracking-[-0.02em] first:pt-0">
       {children}
     </h2>
   );
@@ -311,18 +311,9 @@ export function Docs() {
   const next = PAGES[index + 1];
 
   return (
-    <div className="min-h-dvh bg-sheet">
-      <header className="sticky top-0 z-10 border-b border-rule bg-sheet/95 backdrop-blur-[2px]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
-          <Link to="/" aria-label="Billet home">
-            <Wordmark />
-          </Link>
-          <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
-            <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
-              Write an invoice
-            </Link>
-          </nav>
-        </div>
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md">
+        <SiteHeader />
         <nav aria-label="Docs pages" className="overflow-x-auto border-t border-rule lg:hidden">
           <ul className="flex w-max gap-1 px-4 py-2 text-[0.88rem]">
             {PAGES.map((p) => (
@@ -342,7 +333,7 @@ export function Docs() {
 
       <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-24 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
         <aside className="hidden lg:block">
-          <nav aria-label="Docs pages" className="sticky top-24">
+          <nav aria-label="Docs pages" className="sticky top-36">
             <div className="form-label text-sheet-ink">Docs</div>
             <ul className="mt-3 space-y-1.5 text-[0.93rem]">
               {PAGES.map((p) => (
@@ -377,6 +368,7 @@ export function Docs() {
           </nav>
         </article>
       </div>
+      <SiteFooter />
     </div>
   );
 }

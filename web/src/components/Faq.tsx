@@ -45,7 +45,7 @@ export function Faq() {
     <section id="faq" className="bg-sheet">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <h2 className="text-[clamp(1.8rem,3.6vw,2.8rem)] leading-[1.02] font-[780] tracking-[-0.03em]">Questions, answered plainly</h2>
+          <h2 className="text-[clamp(1.8rem,3.6vw,2.8rem)] leading-[1.02] tracking-[-0.02em]">Questions, answered plainly</h2>
           <p className="mt-4 max-w-[40ch] text-sheet-ink">
             The longer version, with the formats and the checks, is in the{" "}
             <Link to="/docs" className="font-[650] text-carbon underline">

@@ -31,6 +31,8 @@ const pages = [
 const browser = await chromium.launch({ executablePath: shell() });
 for (const [w, h, tag] of [[1440, 900, "desktop"], [390, 844, "mobile"]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: "reduce" });
+  const theme = process.env.THEME ?? "light";
+  await ctx.addInitScript((t) => localStorage.setItem("billet.theme", t), theme);
   for (const [name, path] of pages) {
     const page = await ctx.newPage();
     const errors = [];
@@ -38,7 +40,7 @@ for (const [w, h, tag] of [[1440, 900, "desktop"], [390, 844, "mobile"]]) {
     page.on("pageerror", (e) => errors.push(String(e)));
     await page.goto(base + path, { waitUntil: "networkidle" });
     await page.waitForTimeout(name.startsWith("billet") ? 6000 : 1200);
-    await page.screenshot({ path: new URL(`${name}-${tag}.png`, out).pathname.replace(/^\//, ""), fullPage: true });
+    await page.screenshot({ path: new URL(`${name}-${tag}${process.env.THEME ? "-" + process.env.THEME : ""}.png`, out).pathname.replace(/^\//, ""), fullPage: true });
     console.log(`${tag} ${name}: ${errors.length ? errors.join(" | ").slice(0, 300) : "no console errors"}`);
     await page.close();
   }

@@ -3,7 +3,9 @@ import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
 import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
 import { acceptedTokens, decodeLink, symbolOf, toUnits } from "@billet/core";
-import { Button, CheckLine, Copy, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+import { Button, CheckLine, Copy, Serial, Stamp } from "../components/paper.tsx";
+import { SiteHeader } from "../components/site.tsx";
+import { Sunburst } from "../components/art.tsx";
 import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
 import { connectWallet, fundFromFaucet, payWithMemo, tokenBalance } from "../lib/tempo.ts";
@@ -98,7 +100,7 @@ export function BilletPage() {
     return (
       <Frame>
         <Copy className="mx-auto max-w-xl p-8">
-          <h1 className="text-2xl font-[750]">This link holds no billet.</h1>
+          <h1 className="text-2xl">This link holds no billet.</h1>
           <p className="mt-3 text-canary-ink">
             A billet link ends in <span className="typed">#t=…&amp;p=zdp:1:…</span>. The part after the # never reaches any server, so
             check that the whole link was copied.
@@ -141,7 +143,7 @@ export function BilletPage() {
 
           {!inv && error && (
             <div>
-              <h1 className="text-[clamp(1.6rem,4vw,2.3rem)] leading-[1.08] font-[780] tracking-[-0.025em]">{explain(error).title}</h1>
+              <h1 className="text-[clamp(1.6rem,4vw,2.3rem)] leading-[1.08] tracking-[-0.02em]">{explain(error).title}</h1>
               <p role="alert" className="mt-4 max-w-[60ch] text-[1rem] font-[600] text-serial">
                 {explain(error).detail}
               </p>
@@ -152,8 +154,7 @@ export function BilletPage() {
             <>
               <div className="flex items-start justify-between gap-4">
                 <h1
-                  className="max-w-[18ch] text-[clamp(1.9rem,5vw,3rem)] leading-[1.02] font-[800] tracking-[-0.03em]"
-                  style={{ fontVariationSettings: '"wdth" 104' }}
+                  className="max-w-[18ch] text-[clamp(2rem,5vw,3.2rem)] leading-[1.04] tracking-[-0.01em]"
                 >
                   {status?.paid ? (
                     <>
@@ -328,21 +329,10 @@ export function BilletPage() {
 
 export function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh px-4 pt-6 pb-16 sm:px-8">
-      <header className="mx-auto mb-8 flex max-w-5xl items-center justify-between">
-        <Link to="/" aria-label="Billet home">
-          <Wordmark />
-        </Link>
-        <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
-          <Link to="/docs" className="underline decoration-ink/30 hover:text-carbon">
-            Docs
-          </Link>
-          <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
-            Write an invoice
-          </Link>
-        </nav>
-      </header>
-      {children}
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip">
+      <Sunburst className="pointer-events-none absolute top-[-14rem] right-[-16rem] w-[44rem] opacity-60" inner={170} />
+      <SiteHeader />
+      <main className="relative flex-1 px-4 pt-4 pb-20 sm:px-8">{children}</main>
     </div>
   );
 }

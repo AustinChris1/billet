@@ -37,7 +37,16 @@ importers:
       '@fontsource-variable/archivo':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource-variable/geist':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/geist-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/courier-prime':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/gloock':
         specifier: ^5.3.0
         version: 5.3.0
       '@siwz/core':
@@ -107,8 +116,17 @@ packages:
   '@fontsource-variable/archivo@5.3.0':
     resolution: {integrity: sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g==}
 
+  '@fontsource-variable/geist-mono@5.3.0':
+    resolution: {integrity: sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==}
+
+  '@fontsource-variable/geist@5.3.0':
+    resolution: {integrity: sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==}
+
   '@fontsource/courier-prime@5.3.0':
     resolution: {integrity: sha512-KIi1k4VG1Wv+/CGpb1AUpLkUuOAQA6zmvthqxOZGN0AV8BEgQgbK7qAtquv14zsBJAY1bb5BHIEbWVFLgENh0w==}
+
+  '@fontsource/gloock@5.3.0':
+    resolution: {integrity: sha512-vGvBRavw/y3aTCsz1uTNydQjCfRLGNOnSpmn/Qs3EZDqPAKBg6Id4OdHGnWLWXQ57IkzuNk/e9+KdMze+azOxA==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -860,7 +878,13 @@ snapshots:
 
   '@fontsource-variable/archivo@5.3.0': {}
 
+  '@fontsource-variable/geist-mono@5.3.0': {}
+
+  '@fontsource-variable/geist@5.3.0': {}
+
   '@fontsource/courier-prime@5.3.0': {}
+
+  '@fontsource/gloock@5.3.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

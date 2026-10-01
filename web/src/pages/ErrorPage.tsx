@@ -1,19 +1,17 @@
 import { Link, useRouteError } from "react-router";
-import { Copy, Wordmark } from "../components/paper.tsx";
+import { Copy } from "../components/paper.tsx";
+import { SiteHeader } from "../components/site.tsx";
 
 /** A crash should read like a torn copy, not a stack trace. */
 export function ErrorPage() {
   const err = useRouteError() as { status?: number; message?: string } | undefined;
   const missing = !err || err.status === 404;
   return (
-    <div className="min-h-dvh px-4 pt-6 pb-16 sm:px-8">
-      <header className="mx-auto mb-8 flex max-w-5xl items-center">
-        <Link to="/" aria-label="Billet home">
-          <Wordmark />
-        </Link>
-      </header>
+    <div className="min-h-dvh">
+      <SiteHeader />
+      <div className="px-4 pt-6 pb-16 sm:px-8">
       <Copy tone="sheet" className="mx-auto max-w-xl p-8">
-        <h1 className="text-2xl font-[750]">{missing ? "There is no page here." : "Something went wrong on this page."}</h1>
+        <h1 className="text-2xl">{missing ? "There is no page here." : "Something went wrong on this page."}</h1>
         <p className="mt-3 text-sheet-ink">
           {missing
             ? "Check the address, or start from the home page."
@@ -28,6 +26,7 @@ export function ErrorPage() {
           </Link>
         </div>
       </Copy>
+      </div>
     </div>
   );
 }

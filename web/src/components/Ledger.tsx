@@ -55,7 +55,7 @@ export function Ledger({ refreshKey, onRepeat }: { refreshKey?: unknown; onRepea
   return (
     <section className="paper-shadow bg-sheet">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-rule px-6 pt-6 pb-4 sm:px-8">
-        <h2 className="text-[1.35rem] font-[780] tracking-[-0.02em]">Your billets</h2>
+        <h2 className="text-[1.35rem] tracking-[-0.02em]">Your billets</h2>
         <span className="text-[0.9rem] text-sheet-ink">
           {rows.length} sealed{owed > 0n ? `, ${usd(owed)} still owed` : ""}
         </span>

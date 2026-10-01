@@ -1,101 +1,192 @@
 @import "tailwindcss";
-@import "@fontsource-variable/archivo";
-@import "@fontsource-variable/archivo/wdth.css";
-@import "@fontsource/courier-prime/400.css";
-@import "@fontsource/courier-prime/700.css";
+@import "@fontsource/gloock/400.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
-@theme {
-  /* The carbonless set: white original, canary client copy, carbon impression, numbering-machine red. */
-  --color-canary: #f6eaa9;
-  --color-canary-deep: #ede0a0;
-  --color-canary-ink: #4f4416;
-  --color-sheet: #fcfbf6;
-  --color-sheet-ink: #5d5a52;
-  --color-carbon: #26389a;
-  --color-carbon-soft: #4b5bb0;
-  --color-serial: #c0232c;
-  --color-ink: #1a1915;
-  --color-chip: #d9d5cb;
-  --color-chip-deep: #aaa496;
-  --color-rule: #1a191526;
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-  --font-form: "Archivo Variable", "Archivo", system-ui, sans-serif;
-  --font-type: "Courier Prime", "Courier New", monospace;
+/*
+  Shielded Ledger. Zcash's private side and Tempo's public side on one page.
+  Light: warm paper and aubergine ink. Dark: aubergine-black and paper ink.
+  Zcash yellow is the one committed accent: fills, the wire, verified ticks.
+*/
+:root {
+  --paper: #f4f2ee;
+  --surface: #ebe7e0;
+  --card: #ffffff;
+  --ink: #231015;
+  --muted: #6b5a5f;
+  --line: #2310151f;
+  --line-strong: #23101547;
+  --zec: #f3b724;
+  --zec-deep: #e0a30f;
+  --zec-ink: #8a5b00;
+  --on-zec: #231015;
+  --ring: #a3a4ad;
+  --danger: #b42318;
+  --band: #231015;
+  --band-ink: #f4f2ee;
+  --band-muted: #c3b3b8;
+  --shadow: 0 1px 2px #2310150d, 0 24px 48px -24px #2310153d;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141012;
+    --surface: #1b1518;
+    --card: #221b1e;
+    --ink: #f4f2ee;
+    --muted: #b6a9ad;
+    --line: #f4f2ee1f;
+    --line-strong: #f4f2ee47;
+    --zec-ink: #f3b724;
+    --ring: #6a6774;
+    --danger: #f97066;
+    --band: #0b0809;
+    --band-ink: #f4f2ee;
+    --band-muted: #b6a9ad;
+    --shadow: 0 1px 2px #0000004d, 0 24px 48px -24px #000000b3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141012;
+  --surface: #1b1518;
+  --card: #221b1e;
+  --ink: #f4f2ee;
+  --muted: #b6a9ad;
+  --line: #f4f2ee1f;
+  --line-strong: #f4f2ee47;
+  --zec-ink: #f3b724;
+  --ring: #6a6774;
+  --danger: #f97066;
+  --band: #0b0809;
+  --band-ink: #f4f2ee;
+  --band-muted: #b6a9ad;
+  --shadow: 0 1px 2px #0000004d, 0 24px 48px -24px #000000b3;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-zec: var(--zec);
+  --color-zec-deep: var(--zec-deep);
+  --color-zec-ink: var(--zec-ink);
+  --color-on-zec: var(--on-zec);
+  --color-ring: var(--ring);
+  --color-danger: var(--danger);
+  --color-band: var(--band);
+  --color-band-ink: var(--band-ink);
+  --color-band-muted: var(--band-muted);
+
+  /* Names the pages already use, pointed at the new roles. */
+  --color-canary: var(--card);
+  --color-canary-deep: var(--surface);
+  --color-canary-ink: var(--muted);
+  --color-sheet: var(--paper);
+  --color-sheet-ink: var(--muted);
+  --color-carbon: var(--zec-ink);
+  --color-carbon-soft: var(--muted);
+  --color-serial: var(--danger);
+  --color-chip: var(--surface);
+  --color-chip-deep: var(--line-strong);
+  --color-rule: var(--line);
+
+  --font-display: "Gloock", Georgia, serif;
+  --font-form: "Geist Variable", system-ui, sans-serif;
+  --font-type: "Geist Mono Variable", ui-monospace, monospace;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
   html {
-    background: var(--color-chip);
-    color: var(--color-ink);
+    background: var(--paper);
+    color: var(--ink);
     font-family: var(--font-form);
-    font-variation-settings: "wdth" 100;
     -webkit-font-smoothing: antialiased;
+    scrollbar-color: var(--line-strong) var(--paper);
   }
   body {
     min-height: 100dvh;
-    background:
-      radial-gradient(120% 80% at 20% 0%, #e3dfd6 0%, transparent 60%),
-      var(--color-chip);
+    background: var(--paper);
+    transition: background-color 0.3s;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-wrap: balance;
   }
   ::selection {
-    background: var(--color-carbon);
-    color: var(--color-canary);
+    background: var(--zec);
+    color: var(--on-zec);
   }
   :focus-visible {
-    outline: 2px solid var(--color-carbon);
+    outline: 2px solid var(--zec);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
   a {
-    text-underline-offset: 0.2em;
+    text-underline-offset: 0.22em;
     text-decoration-thickness: 1px;
   }
   input,
   textarea,
   select {
-    caret-color: var(--color-carbon);
-  }
-  html {
-    scrollbar-color: var(--color-chip-deep) var(--color-chip);
+    caret-color: var(--zec-ink);
   }
 }
 
 @layer components {
-  /* A row of punched holes, the tear line between stub and copy. */
+  /* The tear line between stub and copy. */
   .perforation {
-    background-image: radial-gradient(circle, var(--color-chip) 2.2px, transparent 2.6px);
-    background-size: 8px 11px;
+    background-image: linear-gradient(var(--line-strong) 50%, transparent 50%);
+    background-size: 1px 8px;
     background-repeat: repeat-y;
     background-position: center top;
   }
   .perforation-x {
-    background-image: radial-gradient(circle, var(--color-chip) 2.2px, transparent 2.6px);
-    background-size: 11px 8px;
+    background-image: linear-gradient(90deg, var(--line-strong) 50%, transparent 50%);
+    background-size: 8px 1px;
     background-repeat: repeat-x;
     background-position: left center;
   }
   .paper-shadow {
-    box-shadow:
-      0 1px 0 #00000014,
-      0 18px 40px -18px #3a35284d,
-      0 2px 6px -2px #3a352833;
+    box-shadow: var(--shadow);
   }
   .typed {
     font-family: var(--font-type);
-    color: var(--color-carbon);
-    letter-spacing: 0.01em;
+    color: var(--ink);
+    letter-spacing: -0.01em;
   }
   .form-label {
     font-family: var(--font-form);
-    font-variation-settings: "wdth" 75;
     font-weight: 600;
-    font-size: 0.6875rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
   }
   .num {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes billet-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes billet-dash {
+  to {
+    stroke-dashoffset: -1000;
   }
 }

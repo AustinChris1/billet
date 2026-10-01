@@ -195,7 +195,7 @@ export function IssuePage() {
             <Copy tone="sheet" stub={<div className="text-sheet-ink"><div className="form-label">Original</div><div className="mt-2"><Serial /></div></div>}>
               <div className="p-6 sm:p-8">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <h1 className="text-[1.6rem] leading-tight font-[780] tracking-[-0.02em]">Write an invoice</h1>
+                  <h1 className="text-[1.6rem] leading-tight tracking-[-0.02em]">Write an invoice</h1>
                   <div role="radiogroup" aria-label="Network the client pays on" className="inline-flex rounded-[3px] border border-ink/20 p-0.5 text-[0.85rem]">
                     {NETWORKS.map((n) => (
                       <button
@@ -296,7 +296,7 @@ export function IssuePage() {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-[1.5rem] leading-tight font-[780] tracking-[-0.02em]">Scan with your Zcash wallet</h1>
+                  <h1 className="text-[1.5rem] leading-tight tracking-[-0.02em]">Scan with your Zcash wallet</h1>
                   <p className="mt-3 text-canary-ink">
                     Zodl (formerly Zashi) or any wallet that reads payment QR codes. It sends {SEAL_AMOUNT_ZEC} ZEC with your invoice as the memo to
                     your sealing address. Billet watches new blocks from this browser and makes the link as soon as the note is mined.
@@ -330,7 +330,7 @@ export function IssuePage() {
               </div>
             ) : (
               <div>
-                <h1 className="text-[1.5rem] leading-tight font-[780] tracking-[-0.02em]">Sealed. Send this link to your client.</h1>
+                <h1 className="text-[1.5rem] leading-tight tracking-[-0.02em]">Sealed. Send this link to your client.</h1>
                 <p className="mt-3 max-w-[60ch] text-canary-ink">
                   It opens this invoice and nothing else, and becomes the receipt once they pay. Anyone you give it to can read the
                   invoice, so send it like you would send the invoice itself.

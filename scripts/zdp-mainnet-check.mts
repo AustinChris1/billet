@@ -1,7 +1,7 @@
 // Fetches a real mainnet transaction over gRPC-web and checks a delivery proof against it, as the browser will.
 import { readFileSync } from "node:fs";
 import { initSync, check } from "../vendor/zcash-delivery-proof/zcash_delivery_proof_wasm.js";
-import { getLatestHeight, getTransaction, withProxies } from "../packages/deal/src/lightwalletd.ts";
+import { getLatestHeight, getTransaction, withProxies } from "../packages/billet/src/lightwalletd.ts";
 
 const dir = new URL("../vendor/zcash-delivery-proof/", import.meta.url);
 initSync({ module: readFileSync(new URL("zcash_delivery_proof_wasm_bg.wasm", dir)) });

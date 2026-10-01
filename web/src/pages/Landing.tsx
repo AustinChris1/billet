@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
-import { Button, Copy, Mark, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+import { decodeLink, toUnits } from "@billet/core";
+import { Button, CheckLine, Copy, Mark, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+import { explain, usd, useBillet } from "../lib/useBillet.ts";
 import { Faq } from "../components/Faq.tsx";
 
 const SAMPLES: string[] = (import.meta.env.VITE_SAMPLE_LINKS ?? "")
@@ -17,36 +19,72 @@ const DEMO = [
   ["Amount", "$400.00 in OUSD"],
 ] as const;
 
-/** The hero copy: lines are typed in black, turn carbon blue only once "checked", then the stamp lands. */
-function HeroCopy() {
+/** Without a configured sample the hero is a specimen: it says so, and never claims a payment. */
+function SpecimenCopy() {
   const reduce = useReducedMotion();
-  const [checked, setChecked] = useState(reduce ? DEMO.length : 0);
+  const [typed, setTyped] = useState(reduce ? DEMO.length : 0);
   useEffect(() => {
     if (reduce) return;
-    const timers = DEMO.map((_, i) => setTimeout(() => setChecked(i + 1), 900 + i * 520));
+    const timers = DEMO.map((_, i) => setTimeout(() => setTyped(i + 1), 700 + i * 420));
     return () => timers.forEach(clearTimeout);
   }, [reduce]);
-  const done = checked >= DEMO.length;
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div className="form-label text-canary-ink">Sample billet, illustrative</div>
+        <div className="form-label text-canary-ink">Specimen, not a real invoice</div>
         <Serial id="0x3f1c9a7" />
       </div>
       <dl className="space-y-3.5">
-        {DEMO.map(([k, v], i) => {
-          const ok = i < checked;
-          return (
-            <div key={k} className="grid grid-cols-[6.5rem_1fr_1.25rem] items-baseline gap-3 border-b border-rule pb-2">
-              <dt className="form-label text-canary-ink">{k}</dt>
-              <dd className={`typed text-[1.05rem] transition-colors duration-500 ${ok ? "text-carbon" : "text-ink"}`}>{v}</dd>
-              <span className="self-center">{ok && <Check className="h-4 w-4 text-carbon" strokeWidth={3} />}</span>
-            </div>
-          );
-        })}
+        {DEMO.map(([k, v], i) => (
+          <div key={k} className="grid grid-cols-[6.5rem_1fr] items-baseline gap-3 border-b border-rule pb-2">
+            <dt className="form-label text-canary-ink">{k}</dt>
+            <dd className={`typed text-[1.05rem] text-ink transition-opacity duration-500 ${i < typed ? "opacity-100" : "opacity-0"}`}>{v}</dd>
+          </div>
+        ))}
       </dl>
-      <div className="mt-5 flex min-h-[5.5rem] items-center justify-end pr-2">{done && <Stamp sub="TEMPO" />}</div>
+      <div className="mt-5 flex min-h-[5.5rem] items-center justify-end pr-2">
+        {typed >= DEMO.length && <Stamp label="SPECIMEN" sub="NO PAYMENT" />}
+      </div>
+    </div>
+  );
+}
+
+/** With a sample link configured, the hero runs every real check on it, in the visitor's browser. */
+function LiveCopy({ fragment }: { fragment: string }) {
+  const [link] = useState(() => decodeLink(fragment));
+  const { steps, sealed, status, error } = useBillet(link);
+  const inv = sealed?.invoice;
+  const rows: [string, string | undefined][] = [
+    ["From", inv?.from],
+    ["Bill to", inv?.to],
+    ["For", inv?.work],
+    ["Amount", inv ? `${usd(toUnits(inv.amount))} in OUSD` : undefined],
+  ];
+  return (
+    <div>
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <div className="form-label text-canary-ink">Live billet, checked in your browser now</div>
+        <Serial id={sealed?.id} />
+      </div>
+      <dl className="space-y-3">
+        {rows.map(([k, v]) => (
+          <div key={k} className="grid grid-cols-[6.5rem_1fr_1.25rem] items-baseline gap-3 border-b border-rule pb-2">
+            <dt className="form-label text-canary-ink">{k}</dt>
+            <dd className={`typed text-[1.02rem] ${v ? "text-carbon" : "text-canary-ink/50"}`}>{v ?? "…"}</dd>
+            <span className="self-center">{v && <Check className="h-4 w-4 text-carbon" strokeWidth={3} />}</span>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-4 grid items-end gap-2 sm:grid-cols-[1fr_auto]">
+        <ul className="text-[0.86rem]">
+          <CheckLine state={steps.proof}>Zcash note proven</CheckLine>
+          <CheckLine state={steps.invoice}>Invoice is the memo, word for word</CheckLine>
+          <CheckLine state={steps.tempo}>{status ? (status.paid ? "Tempo payment found" : "No Tempo payment yet") : "Tempo payment"}</CheckLine>
+        </ul>
+        <div className="flex min-h-[5rem] items-center justify-end pr-1">{status?.paid && <Stamp sub="ON TEMPO" />}</div>
+      </div>
+      {error && <p className="mt-2 text-[0.85rem] text-serial">{explain(error).title}</p>}
     </div>
   );
 }
@@ -111,14 +149,14 @@ export function Landing() {
                 both, and opens nothing else: not your wallet, not your other clients.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-4">
-                <Button href="/new">
-                  Write an invoice <ArrowRight className="h-4 w-4" />
-                </Button>
                 {SAMPLES[0] && (
-                  <Button kind="quiet" href={`/b${SAMPLES[0]}`}>
-                    Open a real sample
+                  <Button href={`/b${SAMPLES[0]}`}>
+                    Open the live billet <ArrowRight className="h-4 w-4" />
                   </Button>
                 )}
+                <Button kind={SAMPLES[0] ? "quiet" : "primary"} href="/new">
+                  Write an invoice {!SAMPLES[0] && <ArrowRight className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
 
@@ -138,7 +176,7 @@ export function Landing() {
                 }
               >
                 <div className="p-6 sm:p-8">
-                  <HeroCopy />
+                  {SAMPLES[0] ? <LiveCopy fragment={SAMPLES[0]} /> : <SpecimenCopy />}
                 </div>
               </Copy>
             </motion.div>

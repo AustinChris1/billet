@@ -1,79 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
-import { formatUnits, type Hex } from "viem";
+import type { Hex } from "viem";
 import { ExternalLink, Wallet } from "lucide-react";
-import { decodeLink, openInvoice, paymentStatus, toUnits, type PaymentStatus, type SealedInvoice } from "@billet/core";
-import { Button, CheckLine, Copy, Field, Serial, Stamp, Wordmark, type StepState } from "../components/paper.tsx";
-import { chainById, lightwalletdProxies, tempoExplorer, zcashExplorer } from "../lib/config.ts";
-import { proofLib } from "../lib/proof.ts";
+import { decodeLink, toUnits } from "@billet/core";
+import { Button, CheckLine, Copy, Field, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
+import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
 import { payWithMemo } from "../lib/tempo.ts";
-
-type Steps = { fetch: StepState; proof: StepState; invoice: StepState; tempo: StepState };
-
-const short = (s: string, n = 6) => `${s.slice(0, n + 2)}…${s.slice(-n)}`;
-
-/** Turns library errors into a sentence that names the problem and what to do. */
-function explain(message: string): { title: string; detail: string } {
-  if (/not a Billet invoice|wrong number of fields|unreadable payment|not canonical|field \d/i.test(message)) {
-    return { title: "This note is not a Billet invoice.", detail: "The proof checks out, but the note it opens holds other text. Ask the sender for their billet link." };
-  }
-  if (/commit|decrypt|proof|txid|different transaction/i.test(message)) {
-    return { title: "This proof does not match its transaction.", detail: "The link was changed or cut short. Ask the sender to copy it again." };
-  }
-  if (/HTTP|fetch|server|answered|empty response/i.test(message)) {
-    return { title: "Could not reach a Zcash light wallet server.", detail: "Nothing is wrong with the link. Try again in a minute." };
-  }
-  return { title: "Could not open this billet.", detail: message };
-}
-const usd = (units: bigint) => Number(formatUnits(units, 6)).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 export function BilletPage() {
   const [link] = useState(() => decodeLink(window.location.hash));
-  const [steps, setSteps] = useState<Steps>({ fetch: "run", proof: "wait", invoice: "wait", tempo: "wait" });
-  const [sealed, setSealed] = useState<SealedInvoice | null>(null);
-  const [status, setStatus] = useState<PaymentStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { steps, sealed, status, error, setError, refreshPayment } = useBillet(link);
   const [paying, setPaying] = useState(false);
-
-  const refreshPayment = useCallback(async (s: SealedInvoice) => {
-    const chain = chainById(s.invoice.chainId);
-    if (!chain) throw new Error(`This invoice is payable on chain ${s.invoice.chainId}, which Billet does not know.`);
-    setSteps((p) => ({ ...p, tempo: "run" }));
-    const st = await paymentStatus(s, chain);
-    setStatus(st);
-    setSteps((p) => ({ ...p, tempo: "ok" }));
-    return st;
-  }, []);
-
-  useEffect(() => {
-    if (!link) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { check } = await proofLib();
-        const opened = await openInvoice(link, lightwalletdProxies, (tx, proof, net) => {
-          setSteps((p) => ({ ...p, fetch: "ok", proof: "run" }));
-          const out = check(tx, proof, net);
-          setSteps((p) => ({ ...p, proof: "ok", invoice: "run" }));
-          return out;
-        });
-        if (cancelled) return;
-        setSealed(opened);
-        setSteps((p) => ({ ...p, invoice: "ok" }));
-        await refreshPayment(opened);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : String(err));
-        setSteps((p) => {
-          const failAt = (Object.keys(p) as (keyof Steps)[]).find((k) => p[k] === "run");
-          return failAt ? { ...p, [failAt]: "fail" } : p;
-        });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [link, refreshPayment]);
 
   async function pay() {
     if (!sealed) return;

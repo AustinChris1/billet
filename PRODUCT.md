@@ -25,7 +25,7 @@ The link carries a proof, not a key. A viewing key opens a whole account forever
 
 ## Operating Context
 
-- Sealing: the issuer's own Zcash wallet (Zashi/Zodl or any ZIP 321 wallet) scans a QR and sends a tiny shielded note to a receive-only address Billet created in the browser. The seed is discarded; the dust is never spent.
+- Sealing: the issuer's own Zcash wallet (Zodl, formerly Zashi, or any ZIP 321 wallet) scans a QR and sends a tiny shielded note to a receive-only address Billet created in the browser. The seed is discarded; the dust is never spent.
 - Proofs: zcash-delivery-proof (saplingcash, Apache-2.0, v0.1.0, not yet independently reviewed), WASM in the browser; raw transactions fetched over gRPC-web from public lightwalletd proxies.
 - Payment: TIP-20 `transferWithMemo` on Tempo; OUSD at `0x20c0000000000000000000006a37da5c996874be` (mainnet and Moderato). Fees are paid in the token itself.
 - Issuer address creation: ChainSafe WebZjs (view-only build, 5 MB) in the browser.

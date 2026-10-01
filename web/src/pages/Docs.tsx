@@ -209,22 +209,33 @@ export function Docs() {
           </Case>
 
           <H2 id="send">Sending an invoice</H2>
-          <P>You need a Zcash wallet that scans payment QR codes, such as Zashi or Zodl, with a little ZEC, and a Tempo address.</P>
+          <P>You need a Zcash wallet that scans payment QR codes, such as Zodl (formerly Zashi), with a little ZEC, and a Tempo address.</P>
           <Steps
             items={[
               <>
                 Open <Link to="/new" className="font-[650] text-carbon underline">Write an invoice</Link>. The first time, click{" "}
                 <strong>Make my sealing address</strong>. Billet creates it in your browser in a few seconds.
               </>,
-              <>Fill in the invoice. Click <strong>Use my wallet</strong> to fill your Tempo address from MetaMask, or paste it.</>,
+              <>
+                Pick where the client pays: <strong>Tempo mainnet</strong> (real OUSD) or <strong>Tempo testnet</strong> (test OUSD). Fill in
+                the invoice. Click <strong>Use my wallet</strong> to fill your Tempo address from MetaMask, or paste it. Your name and
+                address are remembered for next time.
+              </>,
               <>
                 Click <strong>Seal it on Zcash</strong> and scan the QR with your wallet. Confirm the 0.0001 ZEC payment; the memo is your
                 invoice.
               </>,
-              <>Keep the page open. Within about a minute of the next block, Billet shows the link.</>,
+              <>
+                Keep the page open. Within about a minute of the next block, Billet shows the link. If it is slow, paste the transaction
+                id from your wallet into the box under the QR and Billet proves that transaction directly.
+              </>,
               <>Copy the link and send it to your client by any channel you trust.</>,
             ]}
           />
+          <P>
+            Every invoice you seal is listed under <strong>Your billets</strong> on the same page, with whether it has been paid, read
+            live from Tempo. The list lives in this browser only.
+          </P>
           <P>
             Keep the page open while it watches: the watch runs in your browser, not on a server. If you close it, the pending invoice is
             remembered and the watch resumes when you come back.

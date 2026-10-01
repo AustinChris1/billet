@@ -16,7 +16,7 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "What do I need to send an invoice?",
-    a: "A Zcash wallet that scans payment QR codes (Zashi or Zodl, for example) with a little ZEC: 0.0001 ZEC plus the network fee per invoice. And a Tempo address to be paid at.",
+    a: "A Zcash wallet that scans payment QR codes (Zodl, formerly Zashi, for example) with a little ZEC: 0.0001 ZEC plus the network fee per invoice. And a Tempo address to be paid at.",
   },
   {
     q: "Does Billet ever hold my money or my keys?",
@@ -36,7 +36,7 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is it live on mainnet?",
-    a: "The invoices are sealed on Zcash mainnet. Payments currently run on Tempo testnet while Billet is in its hackathon build; switching to Tempo mainnet OUSD is a configuration change. The proof library it uses (zcash-delivery-proof, v0.1.0) has not been independently reviewed yet.",
+    a: "Yes. Invoices are sealed on Zcash mainnet, and the issuer chooses whether the client pays in real OUSD on Tempo mainnet or in test OUSD on Tempo's testnet; every invoice page says which. Billet is a hackathon build: the proof library it uses (zcash-delivery-proof, v0.1.0) has not been independently reviewed, and Billet itself has not been audited.",
   },
 ];
 

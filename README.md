@@ -60,9 +60,10 @@ Change one character of the invoice and its id changes, so the payment no longer
 | | Status |
 |---|---|
 | Delivery proof checked in the browser against Zcash mainnet | Working (`scripts/zdp-mainnet-check.mts`) |
+| Sealing watcher and paste-a-txid path | Tested against a real mined transaction (`packages/billet/test/seal.test.ts`) |
 | Tempo payment found by billet id | Working on Moderato (`packages/billet/scripts/tempo-pay-check.mts`) |
 | Sealing address created in the browser with WebZjs | Working (`scripts/issuer-check.mjs`) |
-| First real sealed invoice on mainnet | Pending: needs a wallet scan with real ZEC |
+| First real invoice, end to end | Sealed in an Ironwood note at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet (tx `0x74d913dc…d0c6`). [Open it](https://billet-zec.vercel.app/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA) |
 | Hosted deployment | Live at https://billet-zec.vercel.app, deployed on every push to `main` |
 
 ## Repository
@@ -78,7 +79,7 @@ scripts           mainnet and browser checks, WebZjs static sync
 
 ```sh
 pnpm install
-pnpm test          # invoice codec and proof-library tests
+pnpm test          # invoice codec, proof library and sealing tests (11)
 pnpm dev:web       # http://localhost:5173
 ```
 

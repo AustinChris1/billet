@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
 import { buildZip321 } from "@siwz/core";
-import { Copy as CopyIcon, KeyRound, Link2, QrCode } from "lucide-react";
-import { createPublicClient, http } from "viem";
+import { Copy as CopyIcon, KeyRound, Link2, QrCode, Smartphone } from "lucide-react";
+import { createPublicClient, http, type Chain } from "viem";
+import { tempo, tempoModerato } from "viem/chains";
 import {
   byteLength,
   encodeInvoice,
@@ -11,76 +12,71 @@ import {
   InvoiceError,
   MEMO_MAX_BYTES,
   newNonce,
+  sealFromTxid,
   watchForSeal,
   withProxies,
   type Invoice,
 } from "@billet/core";
 import { Button, Copy, Serial } from "../components/paper.tsx";
+import { Ledger } from "../components/Ledger.tsx";
 import { Frame } from "./BilletPage.tsx";
 import { issueChain, lightwalletdProxies, OUSD, SEAL_AMOUNT_ZEC } from "../lib/config.ts";
+import { addIssued, loadPending, loadProfile, savePending, saveProfile, type PendingSeal } from "../lib/ledger.ts";
 import { proofLib } from "../lib/proof.ts";
 import { connectWallet } from "../lib/tempo.ts";
 import { createIssuer, loadIssuer, zcashSupported, type Issuer } from "../lib/zcash.ts";
 
-const PENDING = "billet.pending.v1";
-const ISSUED = "billet.issued.v1";
-
-interface Pending {
-  memo: string;
-  fromHeight: number;
-}
-
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function write(key: string, value: unknown) {
-  try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* storage blocked */
-  }
-}
+const NETWORKS: { chain: Chain; label: string; note: string }[] = [
+  { chain: tempo, label: "Tempo mainnet", note: "Real OUSD" },
+  { chain: tempoModerato, label: "Tempo testnet", note: "Test OUSD, no real money" },
+];
 
 const inTwoWeeks = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
 
 export function IssuePage() {
+  const profile = loadProfile();
   const [issuer, setIssuer] = useState<Issuer | null>(() => loadIssuer());
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ from: "", to: "", work: "", amount: "", due: inTwoWeeks(), payTo: "" });
-  const [pending, setPending] = useState<Pending | null>(() => read<Pending | null>(PENDING, null));
+  const [chainId, setChainId] = useState<number>(profile?.chainId ?? issueChain.id);
+  const [form, setForm] = useState({ from: profile?.from ?? "", to: "", work: "", amount: "", due: inTwoWeeks(), payTo: profile?.payTo ?? "" });
+  const [pending, setPending] = useState<PendingSeal | null>(() => loadPending());
+  const [uri, setUri] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [scan, setScan] = useState<{ scanned: number; tip: number } | null>(null);
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
+  const [manualTxid, setManualTxid] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [issuedVersion, setIssuedVersion] = useState(0);
   const abort = useRef<AbortController | null>(null);
 
-  const draft: Invoice | null = useMemo(() => {
-    try {
-      if (!form.payTo) return null;
-      return { ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, since: 99_999_999, nonce: "0000000000000000" };
-    } catch {
-      return null;
-    }
-  }, [form]);
+  const chain = NETWORKS.find((n) => n.chain.id === chainId)?.chain ?? issueChain;
+
   const size = useMemo(() => {
     try {
-      return draft ? byteLength(encodeInvoice(draft)) : null;
+      if (!form.payTo) return null;
+      const draft: Invoice = { ...form, chainId, token: OUSD, payTo: form.payTo as `0x${string}`, since: 99_999_999, nonce: "0000000000000000" };
+      return byteLength(encodeInvoice(draft));
     } catch {
       return null;
     }
-  }, [draft]);
+  }, [form, chainId]);
+
+  function finish(memo: string, proof: string, txid: string) {
+    const url = `${window.location.origin}/b${encodeLink({ proof, txid })}`;
+    abort.current?.abort();
+    setLinkUrl(url);
+    addIssued({ url, memo, at: new Date().toISOString() });
+    savePending(null);
+    setIssuedVersion((v) => v + 1);
+  }
 
   useEffect(() => {
     if (!pending || !issuer) return;
-    const uri = buildZip321({ address: issuer.address, amount: SEAL_AMOUNT_ZEC, memo: pending.memo, label: "Billet seal" });
-    QRCode.toDataURL(uri, { margin: 1, scale: 6, color: { dark: "#1a1915", light: "#fcfbf6" }, errorCorrectionLevel: "M" }).then(setQr);
+    const request = buildZip321({ address: issuer.address, amount: SEAL_AMOUNT_ZEC, memo: pending.memo, label: "Billet seal" });
+    setUri(request);
+    // Low error correction keeps a long memo request scannable: fewer, larger modules.
+    QRCode.toDataURL(request, { margin: 2, scale: 6, color: { dark: "#1a1915", light: "#fcfbf6" }, errorCorrectionLevel: "L" }).then(setQr);
     const ctl = new AbortController();
     abort.current = ctl;
     (async () => {
@@ -95,10 +91,7 @@ export function IssuePage() {
           signal: ctl.signal,
           onHeight: (scanned, tip) => setScan({ scanned, tip }),
         });
-        const url = `${window.location.origin}/b${encodeLink({ proof: sealed.proof, txid: sealed.txid })}`;
-        setLinkUrl(url);
-        write(ISSUED, [{ url, memo: pending.memo, at: new Date().toISOString() }, ...read<unknown[]>(ISSUED, [])]);
-        write(PENDING, null);
+        finish(pending.memo, sealed.proof, sealed.txid);
       } catch (err) {
         if ((err as Error).name !== "AbortError") setError((err as Error).message);
       }
@@ -120,7 +113,7 @@ export function IssuePage() {
 
   async function fillWallet() {
     try {
-      const { address } = await connectWallet(issueChain);
+      const { address } = await connectWallet(chain);
       setForm((f) => ({ ...f, payTo: address }));
     } catch (err) {
       setError((err as Error).message);
@@ -131,11 +124,12 @@ export function IssuePage() {
     e.preventDefault();
     setError(null);
     try {
-      const since = Number(await createPublicClient({ chain: issueChain, transport: http() }).getBlockNumber());
-      const memo = encodeInvoice({ ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, since, nonce: newNonce() });
+      const since = Number(await createPublicClient({ chain, transport: http() }).getBlockNumber());
+      const memo = encodeInvoice({ ...form, chainId, token: OUSD, payTo: form.payTo as `0x${string}`, since, nonce: newNonce() });
       const tip = await withProxies(lightwalletdProxies, getLatestHeight);
       const next = { memo, fromHeight: tip };
-      write(PENDING, next);
+      saveProfile({ from: form.from, payTo: form.payTo, chainId });
+      savePending(next);
       setLinkUrl(null);
       setPending(next);
     } catch (err) {
@@ -143,13 +137,32 @@ export function IssuePage() {
     }
   }
 
+  async function useTxid() {
+    if (!pending || !issuer) return;
+    setError(null);
+    try {
+      const { make } = await proofLib();
+      const sealed = await sealFromTxid({ proxies: lightwalletdProxies, make, viewingKey: issuer.ufvk, memoText: pending.memo, txid: manualTxid });
+      finish(pending.memo, sealed.proof, sealed.txid);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   function startOver() {
     abort.current?.abort();
-    write(PENDING, null);
+    savePending(null);
     setPending(null);
     setQr(null);
+    setUri(null);
     setScan(null);
     setLinkUrl(null);
+    setManualTxid("");
+    setForm((f) => ({ ...f, to: "", work: "", amount: "", due: inTwoWeeks() }));
+  }
+
+  function copy(text: string, tag: string) {
+    navigator.clipboard.writeText(text).then(() => setCopied(tag));
   }
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -180,7 +193,24 @@ export function IssuePage() {
           <form onSubmit={seal}>
             <Copy tone="sheet" stub={<div className="text-sheet-ink"><div className="form-label">Original</div><div className="mt-2"><Serial /></div></div>}>
               <div className="p-6 sm:p-8">
-                <h1 className="text-[1.6rem] leading-tight font-[780] tracking-[-0.02em]">Write an invoice</h1>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <h1 className="text-[1.6rem] leading-tight font-[780] tracking-[-0.02em]">Write an invoice</h1>
+                  <div role="radiogroup" aria-label="Network the client pays on" className="inline-flex rounded-[3px] border border-ink/20 p-0.5 text-[0.85rem]">
+                    {NETWORKS.map((n) => (
+                      <button
+                        key={n.chain.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={chainId === n.chain.id}
+                        title={n.note}
+                        onClick={() => setChainId(n.chain.id)}
+                        className={`rounded-[2px] px-3 py-1.5 font-[650] transition-colors ${chainId === n.chain.id ? "bg-ink text-sheet" : "text-sheet-ink hover:text-ink"}`}
+                      >
+                        {n.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
                   <label className="block">
                     <span className="form-label text-sheet-ink">From</span>
@@ -214,8 +244,8 @@ export function IssuePage() {
                 </div>
                 <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
                   <span className="text-[0.85rem] text-sheet-ink">
-                    {size !== null ? `${size} of ${MEMO_MAX_BYTES} bytes in the sealed note` : "Everything above goes into one shielded note."}
-                    {issueChain.testnet && " Payable on Tempo testnet."}
+                    {size !== null ? `${size} of ${MEMO_MAX_BYTES} bytes in the sealed note.` : "Everything above goes into one shielded note."}
+                    {chain.testnet ? " Payable on Tempo testnet." : " Payable in real OUSD on Tempo."}
                   </span>
                   <Button type="submit">
                     <QrCode className="h-4 w-4" />
@@ -231,18 +261,46 @@ export function IssuePage() {
           <Copy className="p-6 sm:p-8">
             {!linkUrl ? (
               <div className="grid gap-8 sm:grid-cols-[auto_1fr]">
-                <div className="mx-auto w-56">
-                  {qr ? <img src={qr} alt="Zcash payment request that seals this invoice" className="w-56 rounded-[3px]" /> : <div className="h-56 w-56 animate-pulse bg-canary-deep" />}
+                <div className="mx-auto w-64">
+                  {qr ? <img src={qr} alt="Zcash payment request that seals this invoice" className="w-64 rounded-[3px]" /> : <div className="h-64 w-64 animate-pulse bg-canary-deep" />}
+                  {uri && (
+                    <div className="mt-3 flex justify-center gap-4 text-[0.85rem] font-[650]">
+                      <a href={uri} className="inline-flex items-center gap-1.5 text-carbon underline">
+                        <Smartphone className="h-4 w-4" /> Open in wallet
+                      </a>
+                      <button onClick={() => copy(uri, "uri")} className="inline-flex items-center gap-1.5 text-carbon underline">
+                        <CopyIcon className="h-4 w-4" /> {copied === "uri" ? "Copied" : "Copy request"}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <h1 className="text-[1.5rem] leading-tight font-[780] tracking-[-0.02em]">Scan with your Zcash wallet</h1>
                   <p className="mt-3 text-canary-ink">
-                    Zashi, Zodl or any wallet that reads payment QR codes. It sends {SEAL_AMOUNT_ZEC} ZEC with your invoice as the memo to
-                    your sealing address. Billet watches the chain from this browser and makes the link as soon as the note is mined.
+                    Zodl (formerly Zashi) or any wallet that reads payment QR codes. It sends {SEAL_AMOUNT_ZEC} ZEC with your invoice as the memo to
+                    your sealing address. Billet watches new blocks from this browser and makes the link as soon as the note is mined.
                   </p>
                   <p className="typed mt-4 text-[0.9rem]">
-                    {scan ? `Scanned to block ${scan.scanned} of ${scan.tip}. Waiting for your note…` : "Starting the watch…"}
+                    {scan ? `Checked block ${scan.scanned}. Waiting for your note…` : "Starting the watch…"}
                   </p>
+                  <div className="mt-6 border-t border-ink/15 pt-4">
+                    <label className="form-label text-canary-ink" htmlFor="txid">
+                      Already sent it? Paste the transaction id from your wallet
+                    </label>
+                    <div className="mt-1 flex items-end gap-3">
+                      <input
+                        id="txid"
+                        value={manualTxid}
+                        onChange={(e) => setManualTxid(e.target.value)}
+                        placeholder="64 hex characters"
+                        spellCheck={false}
+                        className="typed min-w-0 flex-1 border-b border-ink/25 bg-transparent py-1.5 text-[0.9rem] outline-none focus:border-carbon"
+                      />
+                      <button onClick={useTxid} disabled={manualTxid.trim().length < 64} className="shrink-0 pb-1.5 text-[0.85rem] font-[650] text-carbon underline disabled:opacity-40">
+                        Use it
+                      </button>
+                    </div>
+                  </div>
                   <button onClick={startOver} className="mt-6 text-[0.85rem] font-[650] text-canary-ink underline">
                     Change the invoice
                   </button>
@@ -257,13 +315,9 @@ export function IssuePage() {
                 </p>
                 <div className="typed mt-5 rounded-[3px] bg-sheet p-3 text-[0.8rem] break-all">{linkUrl}</div>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <Button
-                    onClick={() => {
-                      navigator.clipboard.writeText(linkUrl).then(() => setCopied(true));
-                    }}
-                  >
+                  <Button onClick={() => copy(linkUrl, "link")}>
                     <CopyIcon className="h-4 w-4" />
-                    {copied ? "Copied" : "Copy link"}
+                    {copied === "link" ? "Copied" : "Copy link"}
                   </Button>
                   <Button kind="quiet" href={linkUrl}>
                     <Link2 className="h-4 w-4" />
@@ -283,6 +337,8 @@ export function IssuePage() {
             {error}
           </p>
         )}
+
+        <Ledger refreshKey={issuedVersion} />
       </div>
     </Frame>
   );

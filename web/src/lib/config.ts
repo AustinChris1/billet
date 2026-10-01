@@ -3,8 +3,8 @@ import type { Chain } from "viem";
 
 const env = import.meta.env;
 
-/** Which Tempo network new invoices are written for. Opening an invoice follows the chain id inside it. */
-export const issueChain: Chain = env.VITE_CHAIN === "tempo" ? tempo : tempoModerato;
+/** Default network for new invoices (the issuer can switch). Opening an invoice follows the chain id inside it. */
+export const issueChain: Chain = env.VITE_CHAIN === "moderato" ? tempoModerato : tempo;
 
 export function chainById(id: number): Chain | undefined {
   return [tempo, tempoModerato].find((c) => c.id === id);

@@ -112,6 +112,21 @@ export async function getLatestHeight(proxy: string): Promise<number> {
   return typeof height === "bigint" ? Number(height) : 0;
 }
 
+/** Display txids of every non-coinbase transaction in a block, from its compact form. */
+export async function getBlockTxids(proxy: string, height: number): Promise<string[]> {
+  const blockId = Uint8Array.from([0x08, ...varint(BigInt(height))]);
+  const block = fields(await unary(proxy, "GetBlock", blockId));
+  const out: string[] = [];
+  for (const vtx of block.get(7) ?? []) {
+    if (!(vtx instanceof Uint8Array)) continue;
+    const tx = fields(vtx);
+    const index = tx.get(1)?.[0];
+    const hash = tx.get(2)?.[0];
+    if (hash instanceof Uint8Array && index !== 0n) out.push(bytesToHex(hash.slice().reverse()));
+  }
+  return out;
+}
+
 /** Tries each proxy in turn and returns the first answer. */
 export async function withProxies<T>(proxies: string[], fn: (proxy: string) => Promise<T>): Promise<T> {
   let last: unknown;

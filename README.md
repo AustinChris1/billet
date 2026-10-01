@@ -2,7 +2,7 @@
 
 **A private dollar invoice.** The invoice is sealed in one shielded Zcash note. The client pays in OUSD on Tempo. One link is both the invoice and the receipt, and it opens that invoice and nothing else.
 
-Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
+Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks). **Live: https://billet-zec.vercel.app**
 
 ---
 
@@ -63,7 +63,7 @@ Change one character of the invoice and its id changes, so the payment no longer
 | Tempo payment found by billet id | Working on Moderato (`packages/billet/scripts/tempo-pay-check.mts`) |
 | Sealing address created in the browser with WebZjs | Working (`scripts/issuer-check.mjs`) |
 | First real sealed invoice on mainnet | Pending: needs a wallet scan with real ZEC |
-| Hosted deployment | Pending |
+| Hosted deployment | Live at https://billet-zec.vercel.app, deployed on every push to `main` |
 
 ## Repository
 

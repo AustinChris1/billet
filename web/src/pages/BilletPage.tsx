@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
-import { Check, ChevronDown, Copy as CopyIcon, ExternalLink, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
+import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
 import { decodeLink, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Serial, Stamp, Wordmark } from "../components/paper.tsx";
 import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
-import { payWithMemo } from "../lib/tempo.ts";
+import { connectWallet, fundFromFaucet, payWithMemo, tokenBalance } from "../lib/tempo.ts";
 
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -19,6 +19,8 @@ export function BilletPage() {
   const [paying, setPaying] = useState(false);
   const [paidAt, setPaidAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shortBy, setShortBy] = useState<{ have: bigint; need: bigint } | null>(null);
+  const [faucet, setFaucet] = useState<"idle" | "sending" | "sent">("idle");
 
   const inv = sealed?.invoice;
   const chain = inv ? chainById(inv.chainId) : undefined;
@@ -33,12 +35,43 @@ export function BilletPage() {
       .catch(() => undefined);
   }, [payment, chain]);
 
+  // An open invoice re-checks Tempo on its own, so whoever is watching sees it flip to paid.
+  useEffect(() => {
+    if (!sealed || !status || status.paid) return;
+    const t = setInterval(() => refreshPayment(sealed).catch(() => undefined), 15_000);
+    return () => clearInterval(t);
+  }, [sealed, status, refreshPayment]);
+
+  async function getTestFunds() {
+    if (!chain) return;
+    setFaucet("sending");
+    setError(null);
+    try {
+      const { address } = await connectWallet(chain);
+      await fundFromFaucet(chain, address);
+      await new Promise((r) => setTimeout(r, 3000));
+      setShortBy(null);
+      setFaucet("sent");
+    } catch (err) {
+      setFaucet("idle");
+      setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
+    }
+  }
+
   async function pay() {
     if (!sealed || !chain) return;
     setPaying(true);
     setError(null);
+    setShortBy(null);
     try {
       const owed = toUnits(sealed.invoice.amount) - (status?.received ?? 0n);
+      const { address } = await connectWallet(chain);
+      // Check the balance before the wallet asks to sign, so a short payer gets a sentence instead of a revert.
+      const have = await tokenBalance(chain, sealed.invoice.token as Hex, address);
+      if (have < owed) {
+        setShortBy({ have, need: owed });
+        return;
+      }
       await payWithMemo(chain, sealed.invoice.token as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
       await refreshPayment(sealed);
     } catch (err) {
@@ -174,6 +207,22 @@ export function BilletPage() {
                   {copied ? "Copied" : status?.paid ? "Copy receipt link" : "Copy link"}
                 </button>
               </div>
+              {shortBy && (
+                <p role="alert" className="mt-4 max-w-[60ch] text-[0.95rem] font-[600] text-serial">
+                  This wallet has {usd(shortBy.have)} in OUSD and the invoice needs {usd(shortBy.need)}.
+                  {testnet ? " Get test OUSD below, then pay again." : " Add OUSD on Tempo, then pay again."}
+                </p>
+              )}
+              {status && !status.paid && testnet && (
+                <button
+                  onClick={getTestFunds}
+                  disabled={faucet === "sending"}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[0.92rem] font-[650] text-carbon underline disabled:opacity-60"
+                >
+                  {faucet === "sending" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : faucet === "sent" ? <Check className="h-4 w-4" /> : <Droplet className="h-4 w-4" />}
+                  {faucet === "sent" ? "Test OUSD sent to your wallet" : faucet === "sending" ? "Asking the Tempo faucet…" : "Get test OUSD from the Tempo faucet"}
+                </button>
+              )}
               {status && !status.paid && (
                 <p className="mt-3 text-[0.85rem] text-canary-ink">
                   {testnet ? "Tempo testnet: paid with test OUSD, no real money moves. " : "Paid in OUSD from any EVM wallet; the fee comes out of the OUSD. "}

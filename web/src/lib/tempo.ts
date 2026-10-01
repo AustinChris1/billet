@@ -43,6 +43,12 @@ export function tokenBalance(chain: Chain, token: Hex, owner: Hex) {
   });
 }
 
+/** Testnet only: Tempo's faucet sends the address 1,000,000 of each test stablecoin, OUSD included. */
+export async function fundFromFaucet(chain: Chain, address: Hex) {
+  if (!chain.testnet) throw new Error("The faucet only exists on Tempo testnet.");
+  await createPublicClient({ chain, transport: http() }).request({ method: "tempo_fundAddress" as never, params: [address] as never });
+}
+
 /** TIP-20 transferWithMemo: the fee comes out of the token being sent, so the payer needs nothing else. */
 export async function payWithMemo(chain: Chain, token: Hex, to: Hex, amount: bigint, memo: Hex): Promise<Hex> {
   const { address, provider } = await connectWallet(chain);

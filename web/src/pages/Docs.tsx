@@ -1,19 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { useEffect, type ReactNode } from "react";
+import { Link, Navigate, useParams } from "react-router";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Wordmark } from "../components/paper.tsx";
 import { OUSD } from "../lib/config.ts";
 
-const TOC = [
-  ["overview", "Overview"],
-  ["how", "How it works"],
-  ["use-cases", "Use cases"],
-  ["send", "Sending an invoice"],
-  ["pay", "Paying an invoice"],
-  ["check", "Checking an invoice"],
-  ["reference", "Reference"],
-  ["security", "Security model and limits"],
-  ["credits", "Open source"],
-] as const;
 
 function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
@@ -84,56 +74,9 @@ function Case({ who, children }: { who: string; children: ReactNode }) {
   );
 }
 
-export function Docs() {
-  const [active, setActive] = useState<string>("overview");
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => entries.filter((e) => e.isIntersecting).forEach((e) => setActive(e.target.id)),
-      { rootMargin: "-20% 0px -70% 0px" },
-    );
-    TOC.forEach(([id]) => {
-      const el = document.getElementById(id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
 
-  return (
-    <div className="min-h-dvh bg-sheet">
-      <header className="sticky top-0 z-10 border-b border-rule bg-sheet/95 backdrop-blur-[2px]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
-          <Link to="/" aria-label="Billet home">
-            <Wordmark />
-          </Link>
-          <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
-            <span className="hidden text-sheet-ink sm:inline">Docs</span>
-            <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
-              Write an invoice
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-24 sm:px-8 lg:grid-cols-[13rem_1fr]">
-        <aside className="hidden lg:block">
-          <nav aria-label="On this page" className="sticky top-24">
-            <div className="form-label text-sheet-ink">On this page</div>
-            <ul className="mt-3 space-y-1.5 text-[0.93rem]">
-              {TOC.map(([id, label]) => (
-                <li key={id}>
-                  <a
-                    href={`#${id}`}
-                    className={`block border-l-2 py-0.5 pl-3 transition-colors ${active === id ? "border-carbon font-[650] text-carbon" : "border-transparent text-sheet-ink hover:text-ink"}`}
-                  >
-                    {label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        <article className="max-w-[44rem]">
+const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
+  { slug: "", title: "Overview", body: () => (<>
           <H2 id="overview">Overview</H2>
           <P>
             Billet is a private dollar invoice. You write an invoice, seal it in one shielded Zcash note, and send your client a link. The
@@ -154,6 +97,24 @@ export function Docs() {
             ]}
           />
 
+          <H2 id="credits">Open source</H2>
+          <P>
+            Billet is open source at{" "}
+            <a className="font-[650] text-carbon underline" href="https://github.com/AustinChris1/billet" target="_blank" rel="noreferrer">
+              github.com/AustinChris1/billet
+            </a>
+            . It builds on{" "}
+            <a className="text-carbon underline" href="https://github.com/saplingcash/zcash-delivery-proof" target="_blank" rel="noreferrer">
+              zcash-delivery-proof
+            </a>{" "}
+            (Apache-2.0),{" "}
+            <a className="text-carbon underline" href="https://github.com/ZcashCommunityGrants/WebZjs" target="_blank" rel="noreferrer">
+              WebZjs
+            </a>{" "}
+            (in a view-only build), SIWZ for the ZIP 321 request, and viem for Tempo.
+          </P>
+  </>) },
+  { slug: "how-it-works", title: "How it works", body: () => (<>
           <H2 id="how">How it works</H2>
           <Steps
             items={[
@@ -184,6 +145,8 @@ export function Docs() {
             payment made for one invoice can never be shown as paying another.
           </P>
 
+  </>) },
+  { slug: "use-cases", title: "Use cases", body: () => (<>
           <H2 id="use-cases">Use cases</H2>
           <P>These are examples of who Billet is for. The names are illustrative.</P>
           <Case who="A freelancer billing a client in another country">
@@ -208,6 +171,8 @@ export function Docs() {
             matching memo is on Tempo. Both checks run in front of everyone, with no screenshots involved.
           </Case>
 
+  </>) },
+  { slug: "guide", title: "Sending, paying, checking", body: () => (<>
           <H2 id="send">Sending an invoice</H2>
           <P>You need a Zcash wallet that scans payment QR codes, such as Zodl (formerly Zashi), with a little ZEC, and a Tempo address.</P>
           <Steps
@@ -270,6 +235,8 @@ export function Docs() {
             ]}
           />
 
+  </>) },
+  { slug: "reference", title: "Reference", body: () => (<>
           <H2 id="reference">Reference</H2>
           <H3>Invoice text</H3>
           <P>UTF-8 text, one field per line, in this order, at most 512 bytes. Amounts have one spelling, so each invoice has one id.</P>
@@ -308,6 +275,8 @@ n=0123456789abcdef`}</Pre>
             ]}
           />
 
+  </>) },
+  { slug: "security", title: "Security and limits", body: () => (<>
           <H2 id="security">Security model and limits</H2>
           <ul className="mt-4 list-disc space-y-2.5 pl-5 leading-[1.65] text-ink/85">
             <li>Billet holds no funds and no wallet keys. Payments go directly from payer to payee.</li>
@@ -324,22 +293,88 @@ n=0123456789abcdef`}</Pre>
             </li>
           </ul>
 
-          <H2 id="credits">Open source</H2>
-          <P>
-            Billet is open source at{" "}
-            <a className="font-[650] text-carbon underline" href="https://github.com/AustinChris1/billet" target="_blank" rel="noreferrer">
-              github.com/AustinChris1/billet
-            </a>
-            . It builds on{" "}
-            <a className="text-carbon underline" href="https://github.com/saplingcash/zcash-delivery-proof" target="_blank" rel="noreferrer">
-              zcash-delivery-proof
-            </a>{" "}
-            (Apache-2.0),{" "}
-            <a className="text-carbon underline" href="https://github.com/ZcashCommunityGrants/WebZjs" target="_blank" rel="noreferrer">
-              WebZjs
-            </a>{" "}
-            (in a view-only build), SIWZ for the ZIP 321 request, and viem for Tempo.
-          </P>
+  </>) },
+];
+
+const href = (slug: string) => (slug ? `/docs/${slug}` : "/docs");
+
+export function Docs() {
+  const { slug = "" } = useParams();
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    document.querySelector("[data-active-tab]")?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [slug]);
+  const index = PAGES.findIndex((p) => p.slug === slug);
+  if (index < 0) return <Navigate to="/docs" replace />;
+  const page = PAGES[index]!;
+  const prev = PAGES[index - 1];
+  const next = PAGES[index + 1];
+
+  return (
+    <div className="min-h-dvh bg-sheet">
+      <header className="sticky top-0 z-10 border-b border-rule bg-sheet/95 backdrop-blur-[2px]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
+          <Link to="/" aria-label="Billet home">
+            <Wordmark />
+          </Link>
+          <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
+            <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
+              Write an invoice
+            </Link>
+          </nav>
+        </div>
+        <nav aria-label="Docs pages" className="overflow-x-auto border-t border-rule lg:hidden">
+          <ul className="flex w-max gap-1 px-4 py-2 text-[0.88rem]">
+            {PAGES.map((p) => (
+              <li key={p.slug}>
+                <Link
+                  to={href(p.slug)}
+                  data-active-tab={p.slug === slug ? "" : undefined}
+                  className={`block rounded-[3px] px-3 py-1.5 whitespace-nowrap ${p.slug === slug ? "bg-ink font-[650] text-sheet" : "text-sheet-ink hover:text-ink"}`}
+                >
+                  {p.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </header>
+
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-24 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <aside className="hidden lg:block">
+          <nav aria-label="Docs pages" className="sticky top-24">
+            <div className="form-label text-sheet-ink">Docs</div>
+            <ul className="mt-3 space-y-1.5 text-[0.93rem]">
+              {PAGES.map((p) => (
+                <li key={p.slug}>
+                  <Link
+                    to={href(p.slug)}
+                    className={`block border-l-2 py-0.5 pl-3 transition-colors ${p.slug === slug ? "border-carbon font-[650] text-carbon" : "border-transparent text-sheet-ink hover:text-ink"}`}
+                  >
+                    {p.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+
+        <article className="min-w-0 max-w-[44rem]">
+          {page.body()}
+          <nav className="mt-16 grid gap-3 border-t border-rule pt-6 sm:grid-cols-2" aria-label="Previous and next">
+            {prev ? (
+              <Link to={href(prev.slug)} className="group rounded-[3px] border border-rule p-4 hover:border-carbon">
+                <span className="form-label inline-flex items-center gap-1 text-sheet-ink"><ChevronLeft className="h-3.5 w-3.5" /> Previous</span>
+                <span className="mt-1 block font-[700] group-hover:text-carbon">{prev.title}</span>
+              </Link>
+            ) : <span />}
+            {next && (
+              <Link to={href(next.slug)} className="group rounded-[3px] border border-rule p-4 text-right hover:border-carbon">
+                <span className="form-label inline-flex items-center gap-1 text-sheet-ink">Next <ChevronRight className="h-3.5 w-3.5" /></span>
+                <span className="mt-1 block font-[700] group-hover:text-carbon">{next.title}</span>
+              </Link>
+            )}
+          </nav>
         </article>
       </div>
     </div>

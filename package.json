@@ -9,7 +9,7 @@
     "build:web": "pnpm -F @billet/web build"
   },
   "engines": {
-    "node": ">=23.6"
+    "node": ">=22"
   },
   "devDependencies": {
     "playwright": "1.63.0"

@@ -1,14 +1,12 @@
 {
-  "name": "primage",
+  "name": "billet",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.9.0",
   "scripts": {
-    "test": "pnpm -r --if-present test && pnpm test:contracts",
-    "test:contracts": "cd contracts && forge test",
-    "dev:web": "pnpm -F @primage/web dev",
-    "dev:attestor": "pnpm -F @primage/attestor dev",
-    "build:web": "pnpm -F @primage/web build"
+    "test": "pnpm -r --if-present test",
+    "dev:web": "pnpm -F @billet/web dev",
+    "build:web": "pnpm -F @billet/web build"
   },
   "engines": {
     "node": ">=23.6"

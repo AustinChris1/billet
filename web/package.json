@@ -1,5 +1,5 @@
 {
-  "name": "@primage/web",
+  "name": "@billet/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,9 +13,10 @@
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@primage/deal": "workspace:*",
+    "@billet/core": "workspace:*",
     "@siwz/core": "^0.2.3",
     "@zcashcommunitygrants/webzjs-wallet": "workspace:*",
+    "zcash-delivery-proof-wasm": "workspace:*",
     "framer-motion": "^13.4.6",
     "gsap": "^3.15.0",
     "lucide-react": "^1.49.0",

@@ -45,7 +45,8 @@ let wasm: Promise<WebZjs> | null = null;
 export async function createIssuer(): Promise<Issuer> {
   if (!zcashSupported()) throw new Error("This page is not cross-origin isolated, so the Zcash key library cannot start.");
   wasm ??= (async () => {
-    const mod = (await import(/* @vite-ignore */ WEBZJS_URL)) as WebZjs;
+    // A runtime URL keeps Vite from rewriting this import, so the browser loads the static module as-is.
+    const mod = (await import(/* @vite-ignore */ new URL(WEBZJS_URL, window.location.origin).href)) as WebZjs;
     await mod.default();
     await mod.initThreadPool(Math.max(2, Math.min(navigator.hardwareConcurrency || 4, 8)));
     return mod;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
 import { buildZip321 } from "@siwz/core";
 import { Copy as CopyIcon, KeyRound, Link2, QrCode } from "lucide-react";
+import { createPublicClient, http } from "viem";
 import {
   byteLength,
   encodeInvoice,
@@ -63,7 +64,7 @@ export function IssuePage() {
   const draft: Invoice | null = useMemo(() => {
     try {
       if (!form.payTo) return null;
-      return { ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, nonce: "0000000000000000" };
+      return { ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, since: 99_999_999, nonce: "0000000000000000" };
     } catch {
       return null;
     }
@@ -130,7 +131,8 @@ export function IssuePage() {
     e.preventDefault();
     setError(null);
     try {
-      const memo = encodeInvoice({ ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, nonce: newNonce() });
+      const since = Number(await createPublicClient({ chain: issueChain, transport: http() }).getBlockNumber());
+      const memo = encodeInvoice({ ...form, chainId: issueChain.id, token: OUSD, payTo: form.payTo as `0x${string}`, since, nonce: newNonce() });
       const tip = await withProxies(lightwalletdProxies, getLatestHeight);
       const next = { memo, fromHeight: tip };
       write(PENDING, next);

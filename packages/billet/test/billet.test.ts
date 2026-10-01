@@ -26,6 +26,7 @@ const inv: Invoice = {
   token: "0x20c0000000000000000000000000000000000000",
   payTo: "0x7adba972c518d8a489c4c1ba40c310cb8578894c",
   due: "2026-10-20",
+  since: 42082271,
   nonce: "0123456789abcdef",
 };
 
@@ -59,6 +60,7 @@ test("bad inputs are caught before they reach a wallet", () => {
   assert.throws(() => encodeInvoice({ ...inv, amount: "1.1234567" }), InvoiceError);
   assert.throws(() => encodeInvoice({ ...inv, due: "20/10/2026" }), InvoiceError);
   assert.throws(() => encodeInvoice({ ...inv, work: "x".repeat(161) }), InvoiceError);
+  assert.throws(() => encodeInvoice({ ...inv, since: -1 }), InvoiceError);
   assert.equal(encodeInvoice({ ...inv, work: "  Logo\n design  " }).includes("for=Logo design"), true);
 });
 

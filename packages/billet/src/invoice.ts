@@ -20,11 +20,13 @@ export interface Invoice {
   payTo: `0x${string}`;
   /** ISO date, YYYY-MM-DD. */
   due: string;
+  /** Tempo block height when the invoice was written; payments are searched from here. */
+  since: number;
   /** 16 hex chars, so two identical invoices still get different ids. */
   nonce: string;
 }
 
-const KEYS = ["from", "to", "for", "amount", "pay", "token", "due", "n"] as const;
+const KEYS = ["from", "to", "for", "amount", "pay", "token", "due", "since", "n"] as const;
 const AMOUNT = /^(?:0|[1-9]\d{0,11})(?:\.\d{1,6})?$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const NONCE = /^[0-9a-f]{16}$/;
@@ -50,6 +52,7 @@ export function encodeInvoice(inv: Invoice): string {
   if (!isAddress(inv.payTo, { strict: false }) || !isAddress(inv.token, { strict: false })) {
     throw new InvoiceError("payment address and token must be 0x addresses");
   }
+  if (!Number.isSafeInteger(inv.since) || inv.since < 0) throw new InvoiceError("bad Tempo block height");
   if (!NONCE.test(inv.nonce)) throw new InvoiceError("nonce must be 16 lowercase hex chars");
 
   const lines = [
@@ -61,6 +64,7 @@ export function encodeInvoice(inv: Invoice): string {
     `pay=tempo:${inv.chainId}:${getAddress(inv.payTo)}`,
     `token=${getAddress(inv.token)}`,
     `due=${inv.due}`,
+    `since=${inv.since}`,
     `n=${inv.nonce}`,
   ];
   const text = lines.join("\n");
@@ -93,6 +97,7 @@ export function decodeInvoice(text: string): Invoice {
     payTo: pay[2] as `0x${string}`,
     token: f.token as `0x${string}`,
     due: f.due!,
+    since: /^\d+$/.test(f.since!) ? Number(f.since) : -1,
     nonce: f.n!,
   };
   if (encodeInvoice(inv) !== body) throw new InvoiceError("invoice text is not canonical");

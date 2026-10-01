@@ -50,16 +50,30 @@ const transferWithMemo = parseAbiItem(
   "event TransferWithMemo(address indexed from, address indexed to, uint256 amount, bytes32 indexed memo)",
 );
 
-/** Looks for TIP-20 transfers to the invoice's address whose memo is this invoice's id. */
-export async function paymentStatus(sealed: SealedInvoice, chain: Chain, fromBlock: bigint | "earliest" = "earliest"): Promise<PaymentStatus> {
+// Tempo RPC refuses log queries wider than 100,000 blocks.
+const WINDOW = 99_999n;
+
+/** Looks for TIP-20 transfers to the invoice's address whose memo is this invoice's id, from the block it was written at. */
+export async function paymentStatus(sealed: SealedInvoice, chain: Chain, fromBlock?: bigint): Promise<PaymentStatus> {
   if (sealed.invoice.chainId !== chain.id) throw new Error(`invoice is payable on chain ${sealed.invoice.chainId}`);
   const client = createPublicClient({ chain, transport: http() });
-  const logs = await client.getLogs({
-    address: sealed.invoice.token,
-    event: transferWithMemo,
-    args: { to: sealed.invoice.payTo, memo: sealed.id },
-    fromBlock,
-  });
+  const latest = await client.getBlockNumber();
+  const ranges: [bigint, bigint][] = [];
+  for (let start = fromBlock ?? BigInt(sealed.invoice.since); start <= latest; start += WINDOW + 1n) {
+    ranges.push([start, start + WINDOW < latest ? start + WINDOW : latest]);
+  }
+  const chunks = await Promise.all(
+    ranges.map(([from, to]) =>
+      client.getLogs({
+        address: sealed.invoice.token,
+        event: transferWithMemo,
+        args: { to: sealed.invoice.payTo, memo: sealed.id },
+        fromBlock: from,
+        toBlock: to,
+      }),
+    ),
+  );
+  const logs = chunks.flat();
   const payments = logs.map((l) => ({ tx: l.transactionHash, from: l.args.from!, amount: l.args.amount!, block: l.blockNumber }));
   const received = payments.reduce((s, p) => s + p.amount, 0n);
   const due = toUnits(sealed.invoice.amount);

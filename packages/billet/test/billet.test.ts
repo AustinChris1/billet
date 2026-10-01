@@ -83,3 +83,16 @@ test("the delivery-proof library authenticates the memo text Billet hashes", () 
   assert.throws(() => decodeInvoice(d.memoText), InvoiceError, "a non-Billet note is not an invoice");
   assert.equal(typeof make, "function");
 });
+
+test("an invoice can accept any listed USD stablecoin", async () => {
+  const { acceptedTokens, stablecoins, symbolOf } = await import("../src/index.ts");
+  const memo = encodeInvoice({ ...inv, token: "USD" });
+  assert.match(memo, /\ntoken=USD\n/);
+  assert.equal(decodeInvoice(memo).token, "USD");
+  assert.notEqual(billetId(memo), billetId(encodeInvoice(inv)), "accepting any token is a different invoice");
+  assert.deepEqual(acceptedTokens(4217, "USD").map((t) => t.symbol), ["OUSD", "USDT0", "USDC.e", "pathUSD"]);
+  assert.equal(acceptedTokens(4217, inv.token).length, 1);
+  assert.equal(stablecoins(42431).length, 5);
+  assert.equal(symbolOf(42431, "0x20C0000000000000000000000000000000000001"), "AlphaUSD");
+  assert.throws(() => decodeInvoice(memo.replace("token=USD", "token=EUR")), InvoiceError);
+});

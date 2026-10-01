@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Wordmark } from "../components/paper.tsx";
-import { OUSD } from "../lib/config.ts";
+import { stablecoins } from "@billet/core";
 
 
 function H2({ id, children }: { id: string; children: ReactNode }) {
@@ -80,7 +80,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
           <H2 id="overview">Overview</H2>
           <P>
             Billet is a private dollar invoice. You write an invoice, seal it in one shielded Zcash note, and send your client a link. The
-            link opens that invoice in their browser, lets them pay it in OUSD on Tempo, and then serves as the receipt.
+            link opens that invoice in their browser, lets them pay it on Tempo in any USD stablecoin you accept, and then serves as the receipt.
           </P>
           <P>
             The link carries a <strong>delivery proof</strong>, not a key. A delivery proof discloses exactly one note: its value, its memo
@@ -150,12 +150,12 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
           <H2 id="use-cases">Use cases</H2>
           <P>These are examples of who Billet is for. The names are illustrative.</P>
           <Case who="A freelancer billing a client in another country">
-            Ada designs a logo for Jonas in Berlin. She wants dollars, Jonas does not hold crypto beyond a wallet with OUSD. She sends one
+            Ada designs a logo for Jonas in Berlin. She wants dollars, Jonas does not hold crypto beyond a wallet with some USDT. She sends one
             link; Jonas pays from MetaMask in a minute. Her accountant gets the same link at tax time and sees that invoice, not the client
             she would rather keep private, and not her tips.
           </Case>
           <Case who="A contractor paid by a DAO or a foundation">
-            A grant milestone is invoiced as a billet. The treasury pays it in OUSD with the billet id as the memo, so its books reconcile
+            A grant milestone is invoiced as a billet. The treasury pays it in the stablecoin it already holds, with the billet id as the memo, so its books reconcile
             payment to invoice automatically. The contractor never hands the DAO a viewing key that would expose their other work.
           </Case>
           <Case who="A small supplier invoicing a business">
@@ -178,11 +178,11 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
           <Steps
             items={[
               <>
-                Open <Link to="/new" className="font-[650] text-carbon underline">Write an invoice</Link>. The first time, click{" "}
-                <strong>Make my sealing address</strong>. Billet creates it in your browser in a few seconds.
+                Open <Link to="/new" className="font-[650] text-carbon underline">Write an invoice</Link>. The first time you seal, Billet
+                quietly creates your sealing address in your browser; it takes a few seconds and there is nothing to set up.
               </>,
               <>
-                Pick where the client pays: <strong>Tempo mainnet</strong> (real OUSD) or <strong>Tempo testnet</strong> (test OUSD). Fill in
+                Pick where the client pays: <strong>Tempo mainnet</strong> (real stablecoins) or <strong>Tempo testnet</strong> (test stablecoins), and which stablecoins you accept: any USD stablecoin, or one in particular. Fill in
                 the invoice. Click <strong>Use my wallet</strong> to fill your Tempo address from MetaMask, or paste it. Your name and
                 address are remembered for next time.
               </>,
@@ -214,8 +214,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
                 <strong>Check the Pay to address</strong> against what the sender told you, as you would check bank details on any invoice.
               </>,
               <>
-                Click <strong>Pay in OUSD</strong>. Your wallet asks to switch to Tempo if needed, then to approve one transfer. The fee is
-                paid in OUSD.
+                Pick the stablecoin you hold, then click <strong>Pay</strong>. Billet shows your balance in each accepted coin first. Your wallet asks to switch to Tempo if needed, then to approve one transfer. The fee is paid in the coin you send. On testnet, <strong>Get test stablecoins</strong> fills your wallet from Tempo's faucet.
               </>,
               <>When the transfer confirms, the copy is stamped PAID. Keep the link: it is your receipt.</>,
             ]}
@@ -246,7 +245,7 @@ to=Jonas Weber
 for=Logo design, October
 amount=400 USD
 pay=tempo:4217:0x7ADBA972C518D8A489c4c1BA40C310Cb8578894c
-token=${OUSD}
+token=USD
 due=2026-10-20
 since=42082271
 n=0123456789abcdef`}</Pre>
@@ -254,7 +253,7 @@ n=0123456789abcdef`}</Pre>
             head={["Field", "Meaning"]}
             rows={[
               [<Code>pay</Code>, "Tempo chain id and the address that receives the payment"],
-              [<Code>token</Code>, "TIP-20 stablecoin to pay in (OUSD)"],
+              [<Code>token</Code>, "USD for any listed USD stablecoin, or one TIP-20 address"],
               [<Code>since</Code>, "Tempo block when the invoice was written; payments are searched from here"],
               [<Code>n</Code>, "Random nonce, so two identical invoices have different ids"],
             ]}
@@ -271,7 +270,8 @@ n=0123456789abcdef`}</Pre>
               ["Zcash", "Mainnet, Orchard and Ironwood notes"],
               ["Light wallet servers", "zcash-mainnet.chainsafe.dev, zjs.zec.rocks/mainnet (gRPC-web)"],
               ["Tempo", "Mainnet 4217 and Moderato testnet 42431"],
-              ["OUSD", <Code>{OUSD}</Code>],
+              ["Accepted on mainnet", stablecoins(4217).map((s) => s.symbol).join(", ")],
+              ["Accepted on testnet", stablecoins(42431).map((s) => s.symbol).join(", ")],
             ]}
           />
 

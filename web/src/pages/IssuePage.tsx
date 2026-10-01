@@ -15,6 +15,7 @@ import {
   MEMO_MAX_BYTES,
   newNonce,
   sealFromTxid,
+  stablecoins,
   watchForSeal,
   withProxies,
   type Invoice,
@@ -22,7 +23,7 @@ import {
 import { Button, Copy, Serial } from "../components/paper.tsx";
 import { Ledger, type RepeatInvoice } from "../components/Ledger.tsx";
 import { Frame } from "./BilletPage.tsx";
-import { issueChain, lightwalletdProxies, OUSD, SEAL_AMOUNT_ZEC } from "../lib/config.ts";
+import { issueChain, lightwalletdProxies, SEAL_AMOUNT_ZEC } from "../lib/config.ts";
 import { addIssued, loadPending, loadProfile, savePending, saveProfile, type PendingSeal } from "../lib/ledger.ts";
 import { proofLib } from "../lib/proof.ts";
 import { usd } from "../lib/useBillet.ts";
@@ -30,8 +31,8 @@ import { connectWallet } from "../lib/tempo.ts";
 import { createIssuer, loadIssuer, zcashSupported, type Issuer } from "../lib/zcash.ts";
 
 const NETWORKS: { chain: Chain; label: string; note: string }[] = [
-  { chain: tempo, label: "Tempo mainnet", note: "Real OUSD" },
-  { chain: tempoModerato, label: "Tempo testnet", note: "Test OUSD, no real money" },
+  { chain: tempo, label: "Tempo mainnet", note: "Real stablecoins" },
+  { chain: tempoModerato, label: "Tempo testnet", note: "Test stablecoins, no real money" },
 ];
 
 const inTwoWeeks = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
@@ -41,6 +42,7 @@ export function IssuePage() {
   const [issuer, setIssuer] = useState<Issuer | null>(() => loadIssuer());
   const [creating, setCreating] = useState(false);
   const [chainId, setChainId] = useState<number>(profile?.chainId ?? issueChain.id);
+  const [accept, setAccept] = useState<`0x${string}` | "USD">("USD");
   const [form, setForm] = useState({ from: profile?.from ?? "", to: "", work: "", amount: "", due: inTwoWeeks(), payTo: profile?.payTo ?? "" });
   const [pending, setPending] = useState<PendingSeal | null>(() => loadPending());
   const [uri, setUri] = useState<string | null>(null);
@@ -58,12 +60,12 @@ export function IssuePage() {
   const size = useMemo(() => {
     try {
       if (!form.payTo) return null;
-      const draft: Invoice = { ...form, chainId, token: OUSD, payTo: form.payTo as `0x${string}`, since: 99_999_999, nonce: "0000000000000000" };
+      const draft: Invoice = { ...form, chainId, token: accept, payTo: form.payTo as `0x${string}`, since: 99_999_999, nonce: "0000000000000000" };
       return byteLength(encodeInvoice(draft));
     } catch {
       return null;
     }
-  }, [form, chainId]);
+  }, [form, chainId, accept]);
 
   function finish(memo: string, proof: string, txid: string) {
     const url = `${window.location.origin}/b${encodeLink({ proof, txid })}`;
@@ -102,17 +104,6 @@ export function IssuePage() {
     return () => ctl.abort();
   }, [pending, issuer]);
 
-  async function makeIssuer() {
-    setCreating(true);
-    setError(null);
-    try {
-      setIssuer(await createIssuer());
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function fillWallet() {
     try {
@@ -128,7 +119,13 @@ export function IssuePage() {
     setError(null);
     try {
       const since = Number(await createPublicClient({ chain, transport: http() }).getBlockNumber());
-      const memo = encodeInvoice({ ...form, chainId, token: OUSD, payTo: form.payTo as `0x${string}`, since, nonce: newNonce() });
+      const memo = encodeInvoice({ ...form, chainId, token: accept, payTo: form.payTo as `0x${string}`, since, nonce: newNonce() });
+      if (!issuer) {
+        if (!zcashSupported()) throw new Error("This browser cannot run the Zcash key library on this page. Try a current Chrome, Edge or Firefox.");
+        setCreating(true);
+        setIssuer(await createIssuer());
+        setCreating(false);
+      }
       const tip = await withProxies(lightwalletdProxies, getLatestHeight);
       const next = { memo, fromHeight: tip };
       saveProfile({ from: form.from, payTo: form.payTo, chainId });
@@ -136,6 +133,7 @@ export function IssuePage() {
       setLinkUrl(null);
       setPending(next);
     } catch (err) {
+      setCreating(false);
       setError(err instanceof InvoiceError ? err.message : (err as Error).message);
     }
   }
@@ -192,25 +190,7 @@ export function IssuePage() {
   return (
     <Frame>
       <div className="mx-auto max-w-3xl space-y-6">
-        {!issuer && (
-          <Copy tone="sheet" className="p-6 sm:p-8">
-            <h1 className="text-[1.6rem] leading-tight font-[780] tracking-[-0.02em]">First, a sealing address</h1>
-            <p className="mt-3 max-w-[60ch] text-sheet-ink">
-              Billet makes a Zcash address in this browser for sealing your invoices. Its spending key is thrown away the moment it is
-              made, so it can receive the tiny sealing note and nothing can ever leave it. Only its viewing key stays here, to find
-              and prove your notes.
-            </p>
-            <div className="mt-6">
-              <Button onClick={makeIssuer} disabled={creating || !zcashSupported()}>
-                <KeyRound className="h-4 w-4" />
-                {creating ? "Making the address…" : "Make my sealing address"}
-              </Button>
-            </div>
-            {!zcashSupported() && <p className="mt-3 text-[0.9rem] text-serial">This browser cannot run the Zcash key library on this page.</p>}
-          </Copy>
-        )}
-
-        {issuer && !pending && (
+        {!pending && (
           <form onSubmit={seal}>
             <Copy tone="sheet" stub={<div className="text-sheet-ink"><div className="form-label">Original</div><div className="mt-2"><Serial /></div></div>}>
               <div className="p-6 sm:p-8">
@@ -224,7 +204,10 @@ export function IssuePage() {
                         role="radio"
                         aria-checked={chainId === n.chain.id}
                         title={n.note}
-                        onClick={() => setChainId(n.chain.id)}
+                        onClick={() => {
+                          setChainId(n.chain.id);
+                          setAccept("USD");
+                        }}
                         className={`rounded-[2px] px-3 py-1.5 font-[650] transition-colors ${chainId === n.chain.id ? "bg-ink text-sheet" : "text-sheet-ink hover:text-ink"}`}
                       >
                         {n.label}
@@ -254,7 +237,7 @@ export function IssuePage() {
                     <input required type="date" className={input} value={form.due} onChange={set("due")} />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="form-label text-sheet-ink">Pay to (your Tempo address, paid in OUSD)</span>
+                    <span className="form-label text-sheet-ink">Pay to (your Tempo address)</span>
                     <div className="flex items-end gap-3">
                       <input required className={`${input} min-w-0`} value={form.payTo} onChange={set("payTo")} placeholder="0x…" spellCheck={false} />
                       <button type="button" onClick={fillWallet} className="shrink-0 pb-1.5 text-[0.85rem] font-[650] text-carbon underline">
@@ -262,15 +245,32 @@ export function IssuePage() {
                       </button>
                     </div>
                   </label>
+                  <div className="sm:col-span-2">
+                    <span className="form-label text-sheet-ink">Accept</span>
+                    <div role="radiogroup" aria-label="Stablecoins the client can pay in" className="mt-2 flex flex-wrap gap-2">
+                      {[{ symbol: "Any USD stablecoin", address: "USD" as const }, ...stablecoins(chainId)].map((t) => (
+                        <button
+                          key={t.address}
+                          type="button"
+                          role="radio"
+                          aria-checked={accept === t.address}
+                          onClick={() => setAccept(t.address)}
+                          className={`rounded-[3px] border px-3 py-1.5 text-[0.88rem] font-[650] transition-colors ${accept === t.address ? "border-ink bg-ink text-sheet" : "border-ink/20 text-sheet-ink hover:text-ink"}`}
+                        >
+                          {t.symbol}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
                   <span className="text-[0.85rem] text-sheet-ink">
                     {size !== null ? `${size} of ${MEMO_MAX_BYTES} bytes in the sealed note.` : "Everything above goes into one shielded note."}
-                    {chain.testnet ? " Payable on Tempo testnet." : " Payable in real OUSD on Tempo."}
+                    {chain.testnet ? " Payable on Tempo testnet." : " Payable in real stablecoins on Tempo."}
                   </span>
-                  <Button type="submit">
+                  <Button type="submit" disabled={creating}>
                     <QrCode className="h-4 w-4" />
-                    Seal it on Zcash
+                    {creating ? "Preparing your sealing address…" : "Seal it on Zcash"}
                   </Button>
                 </div>
               </div>
@@ -304,6 +304,7 @@ export function IssuePage() {
                   <p className="typed mt-4 text-[0.9rem]">
                     {scan ? `Checked block ${scan.scanned}. Waiting for your note…` : "Starting the watch…"}
                   </p>
+                  <p className="mt-1 text-[0.85rem] text-canary-ink">A Zcash block comes about every minute, so this usually takes one to three minutes after you send.</p>
                   <div className="mt-6 border-t border-ink/15 pt-4">
                     <label className="form-label text-canary-ink" htmlFor="txid">
                       Already sent it? Paste the transaction id from your wallet

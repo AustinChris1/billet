@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
 import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
-import { decodeLink, toUnits } from "@billet/core";
+import { acceptedTokens, decodeLink, symbolOf, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Serial, Stamp, Wordmark } from "../components/paper.tsx";
 import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
@@ -20,12 +20,17 @@ export function BilletPage() {
   const [paidAt, setPaidAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
   const [shortBy, setShortBy] = useState<{ have: bigint; need: bigint } | null>(null);
+  const [payToken, setPayToken] = useState<`0x${string}` | null>(null);
+  const [balances, setBalances] = useState<Record<string, bigint> | null>(null);
   const [faucet, setFaucet] = useState<"idle" | "sending" | "sent">("idle");
 
   const inv = sealed?.invoice;
   const chain = inv ? chainById(inv.chainId) : undefined;
   const testnet = chain?.testnet === true;
   const payment = status?.payments[0];
+  const accepted = inv ? acceptedTokens(inv.chainId, inv.token) : [];
+  const selected = payToken ?? accepted[0]?.address ?? null;
+  const tokenLabel = accepted.length > 1 ? "Any USD stablecoin" : (accepted[0]?.symbol ?? "USD stablecoin");
 
   useEffect(() => {
     if (!payment || !chain) return;
@@ -66,13 +71,21 @@ export function BilletPage() {
     try {
       const owed = toUnits(sealed.invoice.amount) - (status?.received ?? 0n);
       const { address } = await connectWallet(chain);
-      // Check the balance before the wallet asks to sign, so a short payer gets a sentence instead of a revert.
-      const have = await tokenBalance(chain, sealed.invoice.token as Hex, address);
-      if (have < owed) {
-        setShortBy({ have, need: owed });
-        return;
+      // Read every accepted balance before the wallet asks to sign, so a short payer gets a sentence instead of a revert.
+      const entries = await Promise.all(accepted.map(async (t) => [t.address, await tokenBalance(chain, t.address, address)] as const));
+      const bal: Record<string, bigint> = Object.fromEntries(entries);
+      setBalances(bal);
+      let token = selected!;
+      if ((bal[token] ?? 0n) < owed) {
+        const enough = accepted.find((t) => (bal[t.address] ?? 0n) >= owed);
+        if (!enough || payToken) {
+          setShortBy({ have: bal[token] ?? 0n, need: owed });
+          return;
+        }
+        token = enough.address;
       }
-      await payWithMemo(chain, sealed.invoice.token as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
+      setPayToken(token);
+      await payWithMemo(chain, token as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
       await refreshPayment(sealed);
     } catch (err) {
       setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
@@ -177,7 +190,9 @@ export function BilletPage() {
                 <dt className="form-label pt-1 text-canary-ink">{status?.paid ? "Paid to" : "Pay to"}</dt>
                 <dd className="typed text-[0.95rem] break-all">
                   {inv.payTo}
-                  <span className="block text-[0.82rem] text-carbon-soft">OUSD on {chain?.name ?? `chain ${inv.chainId}`}</span>
+                  <span className="block text-[0.82rem] break-normal text-carbon-soft">
+                    {status?.paid && payment ? `Paid in ${symbolOf(inv.chainId, payment.token)}` : tokenLabel} on {chain ? (chain.testnet ? "Tempo testnet" : "Tempo") : `chain ${inv.chainId}`}
+                  </span>
                 </dd>
               </dl>
 
@@ -187,11 +202,34 @@ export function BilletPage() {
                 </div>
               )}
 
+              {status && !status.paid && accepted.length > 1 && (
+                <div className="mt-7">
+                  <div className="form-label text-canary-ink">Pay with</div>
+                  <div role="radiogroup" aria-label="Stablecoin to pay with" className="mt-2 flex flex-wrap gap-2">
+                    {accepted.map((t) => (
+                      <button
+                        key={t.address}
+                        role="radio"
+                        aria-checked={selected === t.address}
+                        onClick={() => {
+                          setPayToken(t.address);
+                          setShortBy(null);
+                        }}
+                        className={`rounded-[3px] border px-3 py-1.5 text-[0.9rem] font-[650] transition-colors ${selected === t.address ? "border-ink bg-ink text-canary" : "border-ink/25 text-ink hover:border-carbon"}`}
+                      >
+                        {t.symbol}
+                        {balances && <span className="typed ml-2 text-[0.8rem] opacity-80">{usd(balances[t.address] ?? 0n)}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
                 {status && !status.paid && (
                   <Button onClick={pay} disabled={paying}>
                     <Wallet className="h-4 w-4" />
-                    {paying ? "Confirm in your wallet…" : `Pay ${usd(status.due - status.received)}`}
+                    {paying ? "Confirm in your wallet…" : `Pay ${usd(status.due - status.received)}${selected ? ` in ${symbolOf(inv.chainId, selected)}` : ""}`}
                   </Button>
                 )}
                 {status?.paid && payment && chain && (
@@ -209,8 +247,8 @@ export function BilletPage() {
               </div>
               {shortBy && (
                 <p role="alert" className="mt-4 max-w-[60ch] text-[0.95rem] font-[600] text-serial">
-                  This wallet has {usd(shortBy.have)} in OUSD and the invoice needs {usd(shortBy.need)}.
-                  {testnet ? " Get test OUSD below, then pay again." : " Add OUSD on Tempo, then pay again."}
+                  This wallet has {usd(shortBy.have)} in {selected ? symbolOf(inv.chainId, selected) : "that token"} and the invoice needs {usd(shortBy.need)}.
+                  {testnet ? " Get test stablecoins below, then pay again." : accepted.length > 1 ? " Pick a stablecoin you hold, or add some on Tempo." : " Add some on Tempo, then pay again."}
                 </p>
               )}
               {status && !status.paid && testnet && (
@@ -220,12 +258,12 @@ export function BilletPage() {
                   className="mt-4 inline-flex items-center gap-1.5 text-[0.92rem] font-[650] text-carbon underline disabled:opacity-60"
                 >
                   {faucet === "sending" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : faucet === "sent" ? <Check className="h-4 w-4" /> : <Droplet className="h-4 w-4" />}
-                  {faucet === "sent" ? "Test OUSD sent to your wallet" : faucet === "sending" ? "Asking the Tempo faucet…" : "Get test OUSD from the Tempo faucet"}
+                  {faucet === "sent" ? "Test stablecoins sent to your wallet" : faucet === "sending" ? "Asking the Tempo faucet…" : "Get test stablecoins from the Tempo faucet"}
                 </button>
               )}
               {status && !status.paid && (
                 <p className="mt-3 text-[0.85rem] text-canary-ink">
-                  {testnet ? "Tempo testnet: paid with test OUSD, no real money moves. " : "Paid in OUSD from any EVM wallet; the fee comes out of the OUSD. "}
+                  {testnet ? "Tempo testnet: paid with test stablecoins, no real money moves. " : "Pay from any EVM wallet; the network fee comes out of the stablecoin you send. "}
                   Check the pay-to address before paying.
                 </p>
               )}

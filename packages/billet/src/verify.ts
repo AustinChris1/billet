@@ -1,6 +1,7 @@
 import { createPublicClient, http, parseAbiItem, type Chain } from "viem";
 import { billetId, decodeInvoice, toUnits, type Invoice } from "./invoice.ts";
 import { getTransaction, withProxies } from "./lightwalletd.ts";
+import { acceptedTokens } from "./tokens.ts";
 import type { BilletLink } from "./link.ts";
 
 /** zcash-delivery-proof's check(txHex, proof, network): JSON, or throws when the proof does not match the bytes. */
@@ -34,6 +35,7 @@ export async function openInvoice(link: BilletLink, proxies: string[], check: Ch
 
 export interface Payment {
   tx: `0x${string}`;
+  token: `0x${string}`;
   from: `0x${string}`;
   amount: bigint;
   block: bigint;
@@ -53,10 +55,11 @@ const transferWithMemo = parseAbiItem(
 // Tempo RPC refuses log queries wider than 100,000 blocks.
 const WINDOW = 99_999n;
 
-/** Looks for TIP-20 transfers to the invoice's address whose memo is this invoice's id, from the block it was written at. */
+/** Looks for TIP-20 transfers to the invoice's address whose memo is this invoice's id, in any accepted token, from the block it was written at. */
 export async function paymentStatus(sealed: SealedInvoice, chain: Chain, fromBlock?: bigint): Promise<PaymentStatus> {
   if (sealed.invoice.chainId !== chain.id) throw new Error(`invoice is payable on chain ${sealed.invoice.chainId}`);
   const client = createPublicClient({ chain, transport: http() });
+  const tokens = acceptedTokens(chain.id, sealed.invoice.token).map((t) => t.address);
   const latest = await client.getBlockNumber();
   const ranges: [bigint, bigint][] = [];
   for (let start = fromBlock ?? BigInt(sealed.invoice.since); start <= latest; start += WINDOW + 1n) {
@@ -65,7 +68,7 @@ export async function paymentStatus(sealed: SealedInvoice, chain: Chain, fromBlo
   const chunks = await Promise.all(
     ranges.map(([from, to]) =>
       client.getLogs({
-        address: sealed.invoice.token,
+        address: tokens,
         event: transferWithMemo,
         args: { to: sealed.invoice.payTo, memo: sealed.id },
         fromBlock: from,
@@ -74,7 +77,7 @@ export async function paymentStatus(sealed: SealedInvoice, chain: Chain, fromBlo
     ),
   );
   const logs = chunks.flat();
-  const payments = logs.map((l) => ({ tx: l.transactionHash, from: l.args.from!, amount: l.args.amount!, block: l.blockNumber }));
+  const payments = logs.map((l) => ({ tx: l.transactionHash, token: l.address, from: l.args.from!, amount: l.args.amount!, block: l.blockNumber }));
   const received = payments.reduce((s, p) => s + p.amount, 0n);
   const due = toUnits(sealed.invoice.amount);
   return { paid: received >= due, received, due, payments };

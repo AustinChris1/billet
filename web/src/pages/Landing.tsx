@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
-import { decodeLink, toUnits } from "@billet/core";
+import { decodeLink, symbolOf, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Mark, Serial, Stamp, Wordmark } from "../components/paper.tsx";
 import { explain, usd, useBillet } from "../lib/useBillet.ts";
 import { Faq } from "../components/Faq.tsx";
@@ -17,7 +17,7 @@ const DEMO = [
   ["From", "Ada Okafor"],
   ["Bill to", "Jonas Weber"],
   ["For", "Logo design, October"],
-  ["Amount", "$400.00 in OUSD"],
+  ["Amount", "$400.00, any USD stablecoin"],
 ] as const;
 
 /** Without a configured sample the hero is a specimen: it says so, and never claims a payment. */
@@ -60,7 +60,7 @@ function LiveCopy({ fragment }: { fragment: string }) {
     ["From", inv?.from],
     ["Bill to", inv?.to],
     ["For", inv?.work],
-    ["Amount", inv ? `${usd(toUnits(inv.amount))} in OUSD` : undefined],
+    ["Amount", inv ? `${usd(toUnits(inv.amount))} in ${inv.token === "USD" ? "any USD stablecoin" : symbolOf(inv.chainId, inv.token)}` : undefined],
   ];
   return (
     <div>
@@ -103,7 +103,7 @@ const STEPS = [
   },
   {
     title: "Pay",
-    body: "Your client pays in OUSD on Tempo from any EVM wallet. The fee comes out of the OUSD, so they need nothing else.",
+    body: "Your client pays in OUSD, USDT0, USDC or any USD stablecoin you accept on Tempo, from any EVM wallet. The fee comes out of the coin they send.",
     tech: "TIP-20 transferWithMemo; memo = billet id.",
   },
   {
@@ -146,7 +146,7 @@ export function Landing() {
                 Private invoice. Public payment. One link.
               </h1>
               <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-sheet-ink">
-                Your invoice is sealed in one shielded Zcash note. Your client pays it in OUSD on Tempo. The link you send proves the
+                Your invoice is sealed in one shielded Zcash note. Your client pays it in dollars on Tempo, in any USD stablecoin. The link you send proves the
                 payment and the invoice are the same, then becomes the receipt. No invoice database. No viewing key.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-4">
@@ -201,7 +201,7 @@ export function Landing() {
               <ul className="typed mt-3 space-y-2 text-[0.95rem]">
                 <li>this invoice, word for word</li>
                 <li>when it was sealed on Zcash</li>
-                <li>the OUSD payment with its id</li>
+                <li>the stablecoin payment with its id</li>
               </ul>
             </div>
             <div className="border border-ink/15 p-5">

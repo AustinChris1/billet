@@ -14,8 +14,8 @@ export interface Invoice {
   amount: string;
   /** Tempo chain id the invoice is payable on. */
   chainId: number;
-  /** TIP-20 stablecoin to pay in. */
-  token: `0x${string}`;
+  /** TIP-20 stablecoin to pay in, or "USD" for any listed USD stablecoin on that chain. */
+  token: `0x${string}` | "USD";
   /** Tempo address that receives the payment. */
   payTo: `0x${string}`;
   /** ISO date, YYYY-MM-DD. */
@@ -49,7 +49,7 @@ export function encodeInvoice(inv: Invoice): string {
   if (!AMOUNT.test(inv.amount) || Number(inv.amount) <= 0) throw new InvoiceError("amount must be a positive number");
   if (!DATE.test(inv.due) || Number.isNaN(Date.parse(`${inv.due}T00:00:00Z`))) throw new InvoiceError("due date must be YYYY-MM-DD");
   if (!Number.isSafeInteger(inv.chainId) || inv.chainId <= 0) throw new InvoiceError("bad chain id");
-  if (!isAddress(inv.payTo, { strict: false }) || !isAddress(inv.token, { strict: false })) {
+  if (!isAddress(inv.payTo, { strict: false }) || (inv.token !== "USD" && !isAddress(inv.token, { strict: false }))) {
     throw new InvoiceError("payment address and token must be 0x addresses");
   }
   if (!Number.isSafeInteger(inv.since) || inv.since < 0) throw new InvoiceError("bad Tempo block height");
@@ -62,7 +62,7 @@ export function encodeInvoice(inv: Invoice): string {
     `for=${clean("work", inv.work, 160)}`,
     `amount=${normaliseAmount(inv.amount)} USD`,
     `pay=tempo:${inv.chainId}:${getAddress(inv.payTo)}`,
-    `token=${getAddress(inv.token)}`,
+    `token=${inv.token === "USD" ? "USD" : getAddress(inv.token)}`,
     `due=${inv.due}`,
     `since=${inv.since}`,
     `n=${inv.nonce}`,
@@ -95,7 +95,7 @@ export function decodeInvoice(text: string): Invoice {
     amount: amount[1]!,
     chainId: Number(pay[1]),
     payTo: pay[2] as `0x${string}`,
-    token: f.token as `0x${string}`,
+    token: f.token === "USD" ? "USD" : (f.token as `0x${string}`),
     due: f.due!,
     since: /^\d+$/.test(f.since!) ? Number(f.since) : -1,
     nonce: f.n!,

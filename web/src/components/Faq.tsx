@@ -12,7 +12,7 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Does my client need ZEC or a Zcash wallet?",
-    a: "No. They open the link in a browser and pay in OUSD on Tempo from any EVM wallet such as MetaMask. The network fee comes out of the OUSD, so they need nothing else.",
+    a: "No. They open the link in a browser and pay on Tempo from any EVM wallet such as MetaMask, in any USD stablecoin the invoice accepts (OUSD, USDT0, USDC). The network fee comes out of the coin they send, so they need nothing else.",
   },
   {
     q: "What do I need to send an invoice?",
@@ -36,7 +36,7 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is it live on mainnet?",
-    a: "Yes. Invoices are sealed on Zcash mainnet, and the issuer chooses whether the client pays in real OUSD on Tempo mainnet or in test OUSD on Tempo's testnet; every invoice page says which. Billet is a hackathon build: the proof library it uses (zcash-delivery-proof, v0.1.0) has not been independently reviewed, and Billet itself has not been audited.",
+    a: "Yes. Invoices are sealed on Zcash mainnet, and the issuer chooses whether the client pays in real stablecoins on Tempo mainnet or in test stablecoins on Tempo's testnet; every invoice page says which. Billet is a hackathon build: the proof library it uses (zcash-delivery-proof, v0.1.0) has not been independently reviewed, and Billet itself has not been audited.",
   },
 ];
 

@@ -1,0 +1,8 @@
+{
+  "name": "zcash-delivery-proof-wasm",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "main": "zcash_delivery_proof_wasm.js",
+  "types": "zcash_delivery_proof_wasm.d.ts"
+}

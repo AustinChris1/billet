@@ -7,10 +7,11 @@ import { Button, CheckLine, Copy, Mark, Serial, Stamp, Wordmark } from "../compo
 import { explain, usd, useBillet } from "../lib/useBillet.ts";
 import { Faq } from "../components/Faq.tsx";
 
+// Accepts fragments with or without the leading "#", since dotenv files treat "#" as a comment.
 const SAMPLES: string[] = (import.meta.env.VITE_SAMPLE_LINKS ?? "")
   .split(",")
-  .map((s: string) => s.trim())
-  .filter(Boolean);
+  .map((s: string) => s.trim().replace(/^#?/, "#"))
+  .filter((s: string) => s.length > 1);
 
 const DEMO = [
   ["From", "Ada Okafor"],
@@ -76,13 +77,13 @@ function LiveCopy({ fragment }: { fragment: string }) {
           </div>
         ))}
       </dl>
-      <div className="mt-4 grid items-end gap-2 sm:grid-cols-[1fr_auto]">
+      <div className="mt-4">
         <ul className="text-[0.86rem]">
           <CheckLine state={steps.proof}>Zcash note proven</CheckLine>
           <CheckLine state={steps.invoice}>Invoice is the memo, word for word</CheckLine>
           <CheckLine state={steps.tempo}>{status ? (status.paid ? "Tempo payment found" : "No Tempo payment yet") : "Tempo payment"}</CheckLine>
         </ul>
-        <div className="flex min-h-[5rem] items-center justify-end pr-1">{status?.paid && <Stamp sub="ON TEMPO" />}</div>
+        <div className="mt-3 flex min-h-[4.5rem] items-center justify-end pr-2">{status?.paid && <Stamp sub="ON TEMPO" />}</div>
       </div>
       {error && <p className="mt-2 text-[0.85rem] text-serial">{explain(error).title}</p>}
     </div>

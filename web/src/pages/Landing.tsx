@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { Button, Copy, Mark, Serial, Stamp, Wordmark } from "../components/paper.tsx";
+import { Faq } from "../components/Faq.tsx";
 
 const SAMPLES: string[] = (import.meta.env.VITE_SAMPLE_LINKS ?? "")
   .split(",")
@@ -77,7 +78,7 @@ export function Landing() {
   const reduce = useReducedMotion();
   return (
     <div className="min-h-dvh">
-      <section className="bg-canary">
+      <section className="bg-sheet">
         <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 pt-6 pb-10 sm:px-8">
           <header className="flex items-center justify-between">
             <Wordmark />
@@ -85,6 +86,12 @@ export function Landing() {
               <a href="#how" className="hidden underline decoration-ink/30 hover:text-carbon sm:inline">
                 How it works
               </a>
+              <a href="#faq" className="hidden underline decoration-ink/30 hover:text-carbon sm:inline">
+                FAQ
+              </a>
+              <Link to="/docs" className="underline decoration-ink/30 hover:text-carbon">
+                Docs
+              </Link>
               <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
                 Write an invoice
               </Link>
@@ -99,7 +106,7 @@ export function Landing() {
               >
                 An invoice only its link can open.
               </h1>
-              <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-canary-ink">
+              <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-sheet-ink">
                 Billet seals your invoice in one shielded Zcash note and gets you paid in dollars on Tempo. The link you send proves
                 both, and opens nothing else: not your wallet, not your other clients.
               </p>
@@ -130,7 +137,7 @@ export function Landing() {
                   </div>
                 }
               >
-                <div className="bg-canary-deep p-6 sm:p-8">
+                <div className="p-6 sm:p-8">
                   <HeroCopy />
                 </div>
               </Copy>
@@ -175,7 +182,7 @@ export function Landing() {
           <h2 className="text-[clamp(1.8rem,3.6vw,2.8rem)] leading-[1.02] font-[780] tracking-[-0.03em]">Four sheets in one set</h2>
           <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s, i) => (
-              <li key={s.title} className={`paper-shadow flex flex-col p-6 ${i % 2 === 0 ? "bg-sheet" : "bg-canary"}`}>
+              <li key={s.title} className="paper-shadow flex flex-col bg-sheet p-6">
                 <div className="flex items-baseline justify-between">
                   <span className="text-[1.4rem] font-[780] tracking-[-0.02em]">{s.title}</span>
                   <span className="typed text-serial text-[0.95rem] font-bold">{i + 1}/4</span>
@@ -198,6 +205,8 @@ export function Landing() {
           </p>
         </div>
       </section>
+
+      <Faq />
 
       <footer className="bg-chip">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-[0.85rem] text-ink/75 sm:px-8">

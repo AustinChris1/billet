@@ -2,13 +2,14 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Check, LoaderCircle, X } from "lucide-react";
 import type { ReactNode } from "react";
 
-/** The mark: one copy torn from the pad at its perforation, one punched hole. One note, one place. */
+/** The mark: the letter and its carbon impression. The client's copy is an exact duplicate of what you wrote. */
+const B_PATH = "M10.5 6.5v18h7.2a4.6 4.6 0 0 0 0-9.2h-7.2m0 0h6a4.4 4.4 0 0 0 0-8.8h-6";
+
 export function Mark({ className = "h-7 w-7" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      <rect x="5" y="3" width="22" height="26" rx="1.5" fill="var(--color-canary)" stroke="currentColor" strokeWidth="2" />
-      <path d="M5 11h22" stroke="currentColor" strokeWidth="1.6" strokeDasharray="1.6 2.4" />
-      <circle cx="16" cy="20" r="3.4" fill="currentColor" />
+      <path d={B_PATH} fill="none" stroke="var(--color-carbon)" strokeWidth="2.6" strokeLinejoin="round" transform="translate(2.2 1.6)" />
+      <path d={B_PATH} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round" />
     </svg>
   );
 }

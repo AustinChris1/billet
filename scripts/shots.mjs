@@ -19,6 +19,7 @@ function shell() {
 const pages = [
   ["landing", "/"],
   ["new", "/new"],
+  ["docs", "/docs"],
   ["billet-empty", "/b"],
   [
     "billet-notbillet",

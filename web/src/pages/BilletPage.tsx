@@ -228,9 +228,14 @@ export function Frame({ children }: { children: React.ReactNode }) {
         <Link to="/" aria-label="Billet home">
           <Wordmark />
         </Link>
-        <Link to="/new" className="text-[0.95rem] font-[650] underline decoration-ink/30 hover:text-carbon">
-          Write an invoice
-        </Link>
+        <nav className="flex items-center gap-5 text-[0.95rem] font-[650]">
+          <Link to="/docs" className="underline decoration-ink/30 hover:text-carbon">
+            Docs
+          </Link>
+          <Link to="/new" className="underline decoration-ink/30 hover:text-carbon">
+            Write an invoice
+          </Link>
+        </nav>
       </header>
       {children}
     </div>

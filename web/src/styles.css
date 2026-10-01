@@ -6,8 +6,8 @@
 
 @theme {
   /* The carbonless set: white original, canary client copy, carbon impression, numbering-machine red. */
-  --color-canary: #f2d94e;
-  --color-canary-deep: #e6c935;
+  --color-canary: #f6eaa9;
+  --color-canary-deep: #ede0a0;
   --color-canary-ink: #4f4416;
   --color-sheet: #fcfbf6;
   --color-sheet-ink: #5d5a52;
@@ -15,8 +15,8 @@
   --color-carbon-soft: #4b5bb0;
   --color-serial: #c0232c;
   --color-ink: #1a1915;
-  --color-chip: #b6b0a2;
-  --color-chip-deep: #8e887b;
+  --color-chip: #d9d5cb;
+  --color-chip-deep: #aaa496;
   --color-rule: #1a191526;
 
   --font-form: "Archivo Variable", "Archivo", system-ui, sans-serif;
@@ -36,7 +36,7 @@
   body {
     min-height: 100dvh;
     background:
-      radial-gradient(120% 80% at 20% 0%, #c3bdaf 0%, transparent 60%),
+      radial-gradient(120% 80% at 20% 0%, #e3dfd6 0%, transparent 60%),
       var(--color-chip);
   }
   ::selection {

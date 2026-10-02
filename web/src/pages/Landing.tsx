@@ -130,7 +130,7 @@ function HeroArt() {
           <div className="p-5 sm:p-7">{SAMPLES[0] ? <LiveCopy fragment={SAMPLES[0]} onSealed={setSealed} /> : <SpecimenCopy />}</div>
         </Copy>
         <motion.div
-          className="absolute -top-6 -left-2 sm:-top-7 sm:-left-7"
+          className="absolute -top-7 right-2 sm:right-auto sm:-top-7 sm:-left-7"
           initial={reduce ? false : { scale: 2, opacity: 0, rotate: -40 }}
           animate={sealed || !SAMPLES[0] ? { scale: 1, opacity: 1, rotate: -14 } : { scale: 2, opacity: 0, rotate: -40 }}
           transition={{ type: "spring", stiffness: 380, damping: 18, delay: SAMPLES[0] ? 0 : 1.6 }}
@@ -204,16 +204,15 @@ export function Landing() {
               Private invoice. <span className="text-muted">Public payment.</span> One link.
             </motion.h1>
             <motion.p
-              className="mt-6 max-w-[33rem] text-[1.14rem] leading-relaxed text-muted"
+              className="mt-5 max-w-[30rem] text-[1rem] leading-relaxed text-muted sm:mt-6 sm:text-[1.14rem]"
               initial={reduce ? false : { opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.12, ease }}
             >
-              Your invoice is sealed in one shielded Zcash note. Your client pays it in dollars on Tempo, in any USD stablecoin. The link you send proves the
-              payment and the invoice match, then becomes the receipt. No invoice database. No viewing key.
+              The invoice is sealed in one shielded Zcash note and paid in dollars on Tempo. One link proves both, then becomes the receipt.
             </motion.p>
             <motion.div
-              className="mt-9 flex flex-wrap items-center gap-3"
+              className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 sm:mt-9"
               initial={reduce ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.24, ease }}
@@ -222,12 +221,12 @@ export function Landing() {
                 Write an invoice <ArrowRight className="h-4 w-4" />
               </Button>
               {SAMPLES[0] && (
-                <Button kind="quiet" href={`/b${SAMPLES[0]}`}>
-                  Open the live billet
-                </Button>
+                <a href={`/b${SAMPLES[0]}`} className="group inline-flex items-center gap-2 font-[600] text-ink">
+                  See a live billet <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                </a>
               )}
             </motion.div>
-            <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-3 text-[0.88rem] text-muted">
+            <div className="mt-10 hidden flex-wrap items-center gap-x-5 gap-y-3 text-[0.88rem] text-muted sm:flex">
               <span className="inline-flex items-center gap-2">
                 <ZcashLogo className="h-5 w-5" /> Sealed on Zcash
               </span>

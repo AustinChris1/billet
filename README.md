@@ -55,7 +55,7 @@ Change one character of the invoice and its id changes, so the payment no longer
 
 - **ZIP 316** unified viewing key for the sealing address, derived in the browser (ChainSafe WebZjs).
 - **ZIP 32** account derivation from a seed that exists for a moment and is wiped.
-- **ZIP 321** payment request: the QR the issuer's wallet scans (from SIWZ, `@siwz/core`).
+- **ZIP 321** payment request: the QR the issuer's wallet scans (`packages/billet/src/zip321.ts`).
 - **Orchard / Ironwood shielded memo** holding the invoice text.
 - **Delivery proofs** (`zcash-delivery-proof`): one note disclosed, no viewing key.
 - **lightwalletd over gRPC-web**: raw transactions and compact blocks fetched straight from public proxies.
@@ -97,7 +97,6 @@ Billet only reads, so it ships a build of WebZjs ([ZcashCommunityGrants/WebZjs](
 
 ## Prior work, disclosed
 
-- **SIWZ** (`@siwz/core`) by the same author: the ZIP 321 builder used for the sealing QR.
 - **zcash-delivery-proof** by saplingcash: the proof format and its WebAssembly verifier, vendored unmodified (`vendor/zcash-delivery-proof`, Apache-2.0, see its `NOTICE`). Billet builds the invoice, the link, the sealing flow and the Tempo binding on top of it. The library is version 0.1.0 and not yet independently reviewed.
 - Everything else in this repository was written during the hackathon, from 30 September 2026.
 

@@ -111,7 +111,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
             <a className="text-carbon underline" href="https://github.com/ZcashCommunityGrants/WebZjs" target="_blank" rel="noreferrer">
               WebZjs
             </a>{" "}
-            (in a view-only build), SIWZ for the ZIP 321 request, and viem for Tempo.
+            (in a view-only build), and viem plus the Tempo Accounts SDK for Tempo.
           </P>
   </>) },
   { slug: "how-it-works", title: "How it works", body: () => (<>

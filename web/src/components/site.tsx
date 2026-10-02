@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link, NavLink } from "react-router";
-import { BookOpen, FolderGit2, Moon, PenLine, Sun } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router";
+import { ArrowUpRight, BookOpen, FolderGit2, Menu, Moon, PenLine, Sun, X } from "lucide-react";
 import { Wordmark } from "./paper.tsx";
 
 type Theme = "light" | "dark";
@@ -88,27 +88,101 @@ export function TempoLogo({ className = "h-6 w-6", fg = "var(--paper)" }: { clas
 const navCls = ({ isActive }: { isActive: boolean }) =>
   `inline-flex items-center gap-2 rounded-full px-3.5 py-2 transition-colors ${isActive ? "bg-surface text-ink" : "text-muted hover:text-ink"}`;
 
-export function SiteHeader({ extra, sticky }: { extra?: ReactNode; sticky?: boolean }) {
+export type HeaderLink = { href: string; label: string };
+
+/** Desktop: links in a row. Phones: the mark, the theme toggle and a menu button; everything else lives in the menu. */
+export function SiteHeader({ links = [], sticky }: { links?: HeaderLink[]; sticky?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const menuItem = "flex items-center justify-between rounded-[12px] px-3 py-3 text-[1.05rem] font-[560] transition-colors hover:bg-surface";
+
   return (
-    <header className={`${sticky ? "sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md" : "relative z-30"}`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
+    <header ref={ref} className={`${sticky ? "sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md" : "relative z-30"}`}>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-4">
         <Link to="/" aria-label="Billet home" className="shrink-0">
           <Wordmark />
         </Link>
-        <nav className="flex items-center gap-1 text-[0.92rem] font-[550]">
-          {extra}
-          <NavLink to="/docs" className={(s) => `${navCls(s)} hidden sm:inline-flex`}>
+        <nav className="hidden items-center gap-1 text-[0.92rem] font-[550] sm:flex">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="hidden rounded-full px-3.5 py-2 text-muted transition-colors hover:text-ink md:inline-flex">
+              {l.label}
+            </a>
+          ))}
+          <NavLink to="/docs" className={navCls}>
             <BookOpen className="h-4 w-4" /> Docs
           </NavLink>
           <NavLink to="/new" className={navCls}>
-            <PenLine className="h-4 w-4" /> <span className="hidden min-[400px]:inline">Write an invoice</span>
-            <span className="min-[400px]:hidden">Write</span>
+            <PenLine className="h-4 w-4" /> Write an invoice
           </NavLink>
           <span className="ml-1">
             <ThemeToggle />
           </span>
         </nav>
+        <div className="flex items-center gap-2 sm:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            aria-controls="site-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="grid h-10 w-10 place-items-center rounded-full border border-line text-ink transition-colors hover:border-line-strong hover:bg-surface"
+          >
+            {open ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
+          </button>
+        </div>
       </div>
+      {open && (
+        <nav
+          id="site-menu"
+          aria-label="Site"
+          className="absolute inset-x-0 top-full border-y border-line bg-paper px-3 pt-2 pb-4 shadow-[0_24px_40px_-24px_#00000059] sm:hidden"
+        >
+          <ul className="space-y-0.5">
+            {links.map((l) => (
+              <li key={l.href}>
+                <a href={l.href} onClick={() => setOpen(false)} className={`${menuItem} text-ink`}>
+                  {l.label}
+                </a>
+              </li>
+            ))}
+            <li>
+              <Link to="/docs" className={`${menuItem} text-ink`}>
+                Docs
+              </Link>
+            </li>
+            <li>
+              <a href="https://github.com/AustinChris1/billet" target="_blank" rel="noreferrer" className={`${menuItem} text-ink`}>
+                Source on GitHub
+                <ArrowUpRight className="h-4 w-4 text-muted" />
+              </a>
+            </li>
+          </ul>
+          <Link
+            to="/new"
+            className="mt-3 flex items-center justify-center gap-2 rounded-full bg-zec px-6 py-3 font-[600] text-on-zec transition-colors hover:bg-zec-deep"
+          >
+            <PenLine className="h-4 w-4" /> Write an invoice
+          </Link>
+        </nav>
+      )}
     </header>
   );
 }

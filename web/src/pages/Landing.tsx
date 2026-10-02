@@ -182,16 +182,10 @@ export function Landing() {
     <div className="min-h-dvh overflow-x-clip">
       <section className="relative">
         <SiteHeader
-          extra={
-            <>
-              <a href="#how" className="hidden rounded-full px-3.5 py-2 text-muted transition-colors hover:text-ink md:inline-flex">
-                How it works
-              </a>
-              <a href="#faq" className="hidden rounded-full px-3.5 py-2 text-muted transition-colors hover:text-ink md:inline-flex">
-                FAQ
-              </a>
-            </>
-          }
+          links={[
+            { href: "#how", label: "How it works" },
+            { href: "#faq", label: "FAQ" },
+          ]}
         />
         <div className="mx-auto grid max-w-6xl items-center gap-4 px-4 pt-6 pb-10 sm:px-8 lg:min-h-[calc(100dvh-5rem)] lg:grid-cols-[1.08fr_1fr] lg:gap-6">
           <div className="relative z-10">

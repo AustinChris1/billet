@@ -151,7 +151,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
           <P>These are examples of who Billet is for. The names are illustrative.</P>
           <Case who="A freelancer billing a client in another country">
             Ada designs a logo for Jonas in Berlin. She wants dollars, Jonas does not hold crypto beyond a wallet with some USDT. She sends one
-            link; Jonas pays from MetaMask in a minute. Her accountant gets the same link at tax time and sees that invoice, not the client
+            link; Jonas pays with his fingerprint in a minute. Her accountant gets the same link at tax time and sees that invoice, not the client
             she would rather keep private, and not her tips.
           </Case>
           <Case who="A contractor paid by a DAO or a foundation">
@@ -214,7 +214,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
                 <strong>Check the Pay to address</strong> against what the sender told you, as you would check bank details on any invoice.
               </>,
               <>
-                Pick the stablecoin you hold, then click <strong>Pay</strong>. Billet shows your balance in each accepted coin first. Your wallet asks to switch to Tempo if needed, then to approve one transfer. The fee is paid in the coin you send. On testnet, <strong>Get test stablecoins</strong> fills your wallet from Tempo's faucet.
+                Click <strong>Pay with a passkey</strong> to pay through Tempo Wallet with Face ID, a fingerprint or your device PIN, with nothing to install. Or choose <strong>Browser wallet</strong> if you use MetaMask. Billet then shows your balance in each accepted coin; pick one and click <strong>Pay</strong>. You approve one transfer. On mainnet the fee is paid in the coin you send; on testnet it is sponsored, and <strong>Get test stablecoins</strong> fills your account from Tempo's faucet.
               </>,
               <>When the transfer confirms, the copy is stamped PAID. Keep the link: it is your receipt.</>,
             ]}

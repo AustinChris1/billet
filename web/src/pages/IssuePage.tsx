@@ -38,6 +38,26 @@ const NETWORKS: { chain: Chain; label: string; note: string }[] = [
 const inTwoWeeks = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
 
 export function IssuePage() {
+  // Isolation headers only arrive on a full load of /new; an in-app link gets here without them, so load once more.
+  useEffect(() => {
+    if (crossOriginIsolated) return;
+    try {
+      if (sessionStorage.getItem("billet.isolate")) return;
+      sessionStorage.setItem("billet.isolate", "1");
+    } catch {
+      return;
+    }
+    window.location.reload();
+  }, []);
+  useEffect(() => {
+    if (crossOriginIsolated) {
+      try {
+        sessionStorage.removeItem("billet.isolate");
+      } catch {
+        /* nothing to clear */
+      }
+    }
+  }, []);
   const profile = loadProfile();
   const [issuer, setIssuer] = useState<Issuer | null>(() => loadIssuer());
   const [creating, setCreating] = useState(false);

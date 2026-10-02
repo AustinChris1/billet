@@ -12,7 +12,7 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Does my client need ZEC or a Zcash wallet?",
-    a: "No. They open the link in a browser and pay on Tempo from any EVM wallet such as MetaMask, in any USD stablecoin the invoice accepts (OUSD, USDT0, USDC). The network fee comes out of the coin they send, so they need nothing else.",
+    a: "No. They open the link and pay on Tempo with a passkey (Face ID, fingerprint or device PIN, through Tempo Wallet, nothing to install) or from a browser wallet such as MetaMask, in any USD stablecoin the invoice accepts (OUSD, USDT0, USDC). On mainnet the network fee comes out of the coin they send; on testnet it is sponsored.",
   },
   {
     q: "What do I need to send an invoice?",

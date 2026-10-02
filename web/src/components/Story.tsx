@@ -21,8 +21,8 @@ const STEPS: { icon: LucideIcon; title: string; body: string; tech: string }[] =
   {
     icon: Coins,
     title: "Pay",
-    body: "Your client pays in OUSD, USDT0, USDC or any USD stablecoin you accept on Tempo, from any EVM wallet. The fee comes out of the coin they send.",
-    tech: "TIP-20 transferWithMemo; memo = billet id.",
+    body: "Your client pays in OUSD, USDT0, USDC or any USD stablecoin you accept on Tempo, with a passkey or any browser wallet. The fee comes out of the coin they send.",
+    tech: "TIP-20 transferWithMemo; memo = billet id; Tempo Wallet passkey or EIP-1193.",
   },
   {
     icon: BadgeCheck,

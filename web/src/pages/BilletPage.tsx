@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
-import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
+import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, Fingerprint, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
 import { acceptedTokens, decodeLink, symbolOf, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Serial, Stamp } from "../components/paper.tsx";
 import { SiteHeader } from "../components/site.tsx";
 import { Sunburst } from "../components/art.tsx";
 import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
-import { connectWallet, fundFromFaucet, payWithMemo, tokenBalance } from "../lib/tempo.ts";
+import { connectPayer, fundFromFaucet, hasBrowserWallet, passkeySponsored, payAs, tokenBalance, type Payer, type PayMethod } from "../lib/tempo.ts";
+import { TamperTest } from "../components/TamperTest.tsx";
 
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -25,6 +26,8 @@ export function BilletPage() {
   const [payToken, setPayToken] = useState<`0x${string}` | null>(null);
   const [balances, setBalances] = useState<Record<string, bigint> | null>(null);
   const [faucet, setFaucet] = useState<"idle" | "sending" | "sent">("idle");
+  const [payer, setPayer] = useState<Payer | null>(null);
+  const [connecting, setConnecting] = useState<PayMethod | null>(null);
 
   const inv = sealed?.invoice;
   const chain = inv ? chainById(inv.chainId) : undefined;
@@ -33,6 +36,7 @@ export function BilletPage() {
   const accepted = inv ? acceptedTokens(inv.chainId, inv.token) : [];
   const selected = payToken ?? accepted[0]?.address ?? null;
   const tokenLabel = accepted.length > 1 ? "Any USD stablecoin" : (accepted[0]?.symbol ?? "USD stablecoin");
+  const owed = status ? status.due - status.received : 0n;
 
   useEffect(() => {
     if (!payment || !chain) return;
@@ -49,15 +53,42 @@ export function BilletPage() {
     return () => clearInterval(t);
   }, [sealed, status, refreshPayment]);
 
-  async function getTestFunds() {
+  // Reads every accepted balance before anything is signed, so a short payer gets a sentence instead of a revert.
+  async function loadBalances(p: Payer) {
     if (!chain) return;
+    const entries = await Promise.all(accepted.map(async (tk) => [tk.address, await tokenBalance(chain, tk.address, p.address)] as const));
+    const bal: Record<string, bigint> = Object.fromEntries(entries);
+    setBalances(bal);
+    if (!payToken) {
+      const enough = accepted.find((tk) => (bal[tk.address] ?? 0n) >= owed);
+      if (enough) setPayToken(enough.address);
+    }
+  }
+
+  async function connect(method: PayMethod) {
+    if (!chain) return;
+    setConnecting(method);
+    setError(null);
+    try {
+      const p = await connectPayer(chain, method);
+      setPayer(p);
+      await loadBalances(p);
+    } catch (err) {
+      setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
+    } finally {
+      setConnecting(null);
+    }
+  }
+
+  async function getTestFunds() {
+    if (!chain || !payer) return;
     setFaucet("sending");
     setError(null);
     try {
-      const { address } = await connectWallet(chain);
-      await fundFromFaucet(chain, address);
+      await fundFromFaucet(chain, payer.address);
       await new Promise((r) => setTimeout(r, 3000));
       setShortBy(null);
+      await loadBalances(payer);
       setFaucet("sent");
     } catch (err) {
       setFaucet("idle");
@@ -66,28 +97,17 @@ export function BilletPage() {
   }
 
   async function pay() {
-    if (!sealed || !chain) return;
+    if (!sealed || !chain || !payer || !selected) return;
     setPaying(true);
     setError(null);
     setShortBy(null);
     try {
-      const owed = toUnits(sealed.invoice.amount) - (status?.received ?? 0n);
-      const { address } = await connectWallet(chain);
-      // Read every accepted balance before the wallet asks to sign, so a short payer gets a sentence instead of a revert.
-      const entries = await Promise.all(accepted.map(async (t) => [t.address, await tokenBalance(chain, t.address, address)] as const));
-      const bal: Record<string, bigint> = Object.fromEntries(entries);
-      setBalances(bal);
-      let token = selected!;
-      if ((bal[token] ?? 0n) < owed) {
-        const enough = accepted.find((t) => (bal[t.address] ?? 0n) >= owed);
-        if (!enough || payToken) {
-          setShortBy({ have: bal[token] ?? 0n, need: owed });
-          return;
-        }
-        token = enough.address;
+      const have = await tokenBalance(chain, selected, payer.address);
+      if (have < owed) {
+        setShortBy({ have, need: owed });
+        return;
       }
-      setPayToken(token);
-      await payWithMemo(chain, token as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
+      await payAs(payer, chain, selected as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
       await refreshPayment(sealed);
     } catch (err) {
       setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
@@ -203,36 +223,75 @@ export function BilletPage() {
                 </div>
               )}
 
-              {status && !status.paid && accepted.length > 1 && (
-                <div className="mt-7">
-                  <div className="form-label text-canary-ink">Pay with</div>
-                  <div role="radiogroup" aria-label="Stablecoin to pay with" className="mt-2 flex flex-wrap gap-2">
-                    {accepted.map((t) => (
-                      <button
-                        key={t.address}
-                        role="radio"
-                        aria-checked={selected === t.address}
-                        onClick={() => {
-                          setPayToken(t.address);
-                          setShortBy(null);
-                        }}
-                        className={`rounded-[3px] border px-3 py-1.5 text-[0.9rem] font-[650] transition-colors ${selected === t.address ? "border-ink bg-ink text-canary" : "border-ink/25 text-ink hover:border-carbon"}`}
-                      >
-                        {t.symbol}
-                        {balances && <span className="typed ml-2 text-[0.8rem] opacity-80">{usd(balances[t.address] ?? 0n)}</span>}
-                      </button>
-                    ))}
+              {status && !status.paid && !payer && (
+                <div className="mt-8">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button onClick={() => connect("passkey")} disabled={!!connecting}>
+                      {connecting === "passkey" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+                      {connecting === "passkey" ? "Opening Tempo Wallet…" : `Pay ${usd(owed)} with a passkey`}
+                    </Button>
+                    {hasBrowserWallet() && (
+                      <Button kind="quiet" onClick={() => connect("browser")} disabled={!!connecting}>
+                        <Wallet className="h-4 w-4" />
+                        {connecting === "browser" ? "Confirm in your wallet…" : "Browser wallet"}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="mt-3 max-w-[58ch] text-[0.88rem] leading-relaxed text-muted">
+                    A passkey is your Face ID, fingerprint or device PIN, through Tempo Wallet. Nothing to install
+                    {chain && passkeySponsored(chain) ? ", and the network fee is sponsored." : "."}
+                  </p>
+                </div>
+              )}
+
+              {status && !status.paid && payer && (
+                <div className="mt-8">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.88rem] text-muted">
+                    <span className="inline-flex items-center gap-1.5">
+                      {payer.method === "passkey" ? <Fingerprint className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                      Paying from <span className="typed text-ink">{short(payer.address, 4)}</span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        setPayer(null);
+                        setBalances(null);
+                        setShortBy(null);
+                        setFaucet("idle");
+                      }}
+                      className="underline underline-offset-2 hover:text-ink"
+                    >
+                      Change
+                    </button>
+                  </div>
+                  {accepted.length > 1 && (
+                    <div role="radiogroup" aria-label="Stablecoin to pay with" className="mt-4 flex flex-wrap gap-2">
+                      {accepted.map((tk) => (
+                        <button
+                          key={tk.address}
+                          role="radio"
+                          aria-checked={selected === tk.address}
+                          onClick={() => {
+                            setPayToken(tk.address);
+                            setShortBy(null);
+                          }}
+                          className={`rounded-full border px-3.5 py-1.5 text-[0.9rem] font-[600] transition-colors ${selected === tk.address ? "border-ink bg-ink text-paper" : "border-line-strong text-ink hover:border-ink"}`}
+                        >
+                          {tk.symbol}
+                          {balances && <span className="typed ml-2 text-[0.8rem] opacity-75" style={{ color: "inherit" }}>{usd(balances[tk.address] ?? 0n)}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-5">
+                    <Button onClick={pay} disabled={paying || !selected}>
+                      {paying ? <LoaderCircle className="h-4 w-4 animate-spin" /> : payer.method === "passkey" ? <Fingerprint className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                      {paying ? (payer.method === "passkey" ? "Confirm with your passkey…" : "Confirm in your wallet…") : `Pay ${usd(owed)}${selected ? ` in ${symbolOf(inv.chainId, selected)}` : ""}`}
+                    </Button>
                   </div>
                 </div>
               )}
 
               <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-                {status && !status.paid && (
-                  <Button onClick={pay} disabled={paying}>
-                    <Wallet className="h-4 w-4" />
-                    {paying ? "Confirm in your wallet…" : `Pay ${usd(status.due - status.received)}${selected ? ` in ${symbolOf(inv.chainId, selected)}` : ""}`}
-                  </Button>
-                )}
                 {status?.paid && payment && chain && (
                   <a href={tempoExplorer(chain, payment.tx)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-[650] text-carbon underline">
                     Payment on Tempo <ExternalLink className="h-3.5 w-3.5" />
@@ -250,9 +309,17 @@ export function BilletPage() {
                 <p role="alert" className="mt-4 max-w-[60ch] text-[0.95rem] font-[600] text-serial">
                   This wallet has {usd(shortBy.have)} in {selected ? symbolOf(inv.chainId, selected) : "that token"} and the invoice needs {usd(shortBy.need)}.
                   {testnet ? " Get test stablecoins below, then pay again." : accepted.length > 1 ? " Pick a stablecoin you hold, or add some on Tempo." : " Add some on Tempo, then pay again."}
+                  {!testnet && payer?.method === "passkey" && (
+                    <>
+                      {" "}
+                      <a href="https://wallet.tempo.xyz" target="_blank" rel="noreferrer" className="underline">
+                        Open Tempo Wallet
+                      </a>
+                    </>
+                  )}
                 </p>
               )}
-              {status && !status.paid && testnet && (
+              {status && !status.paid && testnet && payer && (
                 <button
                   onClick={getTestFunds}
                   disabled={faucet === "sending"}
@@ -264,7 +331,7 @@ export function BilletPage() {
               )}
               {status && !status.paid && (
                 <p className="mt-3 text-[0.85rem] text-canary-ink">
-                  {testnet ? "Tempo testnet: paid with test stablecoins, no real money moves. " : "Pay from any EVM wallet; the network fee comes out of the stablecoin you send. "}
+                  {testnet ? "Tempo testnet: test stablecoins, no real money moves. " : payer?.method === "passkey" ? "The network fee comes out of the stablecoin you send. " : "The network fee comes out of the stablecoin you send, so you need no gas token. "}
                   Check the pay-to address before paying.
                 </p>
               )}
@@ -294,7 +361,7 @@ export function BilletPage() {
               </span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 pl-7 text-[0.88rem] font-[650] text-canary-ink underline sm:pl-0 sm:no-underline">
-              How this was checked <ChevronDown className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" />
+              Checks and tamper test <ChevronDown className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" />
             </span>
           </summary>
           <div className="px-6 pb-7 sm:px-9">
@@ -315,7 +382,8 @@ export function BilletPage() {
                 Looked for Tempo payments whose memo is this billet id
               </CheckLine>
             </ul>
-            <p className="mt-4 max-w-[62ch] text-[0.85rem] leading-relaxed text-canary-ink">
+            {sealed && <TamperTest sealed={sealed} />}
+            <p className="mt-6 max-w-[62ch] text-[0.85rem] leading-relaxed text-canary-ink">
               The invoice is private: it lives only in one shielded Zcash note, and this link carries a proof for that note, not a viewing
               key. The payment is public: its amount, both addresses and the billet id are on Tempo. The billet id is a hash of the
               invoice text, so this link proves the payment and the invoice are the same.

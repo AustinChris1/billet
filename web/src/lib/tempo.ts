@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, custom, http, numberToHex, type Chain, type EIP1193Provider, type Hex } from "viem";
+import { createPublicClient, createWalletClient, custom, encodeFunctionData, http, numberToHex, type Chain, type EIP1193Provider, type Hex } from "viem";
 import { Abis } from "viem/tempo";
 
 declare global {
@@ -61,6 +61,68 @@ export async function payWithMemo(chain: Chain, token: Hex, to: Hex, amount: big
     functionName: "transferWithMemo",
     args: [to, amount, memo],
   });
+  const receipt = await createPublicClient({ chain, transport: http() }).waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") throw new Error(`The payment reverted: ${hash}`);
+  return hash;
+}
+
+// ---- Tempo Wallet: a passkey account (Face ID, fingerprint), no extension to install.
+
+/** Tempo's public fee payer for its testnet. Mainnet sponsorship needs an API key, so there the fee comes out of the coin sent. */
+const TESTNET_SPONSOR = "https://sponsor.moderato.tempo.xyz";
+
+const passkeyProviders = new Map<number, Promise<AccountsProvider>>();
+
+function passkeyProvider(chain: Chain): Promise<AccountsProvider> {
+  let p = passkeyProviders.get(chain.id);
+  if (!p) {
+    // Loaded on demand, so readers who never pay do not download the wallet SDK.
+    p = import("accounts").then(({ Provider, tempoWallet }) =>
+      Provider.create({
+        adapter: tempoWallet(),
+        chains: [chain],
+        feePayer: chain.testnet ? TESTNET_SPONSOR : undefined,
+      }),
+    );
+    passkeyProviders.set(chain.id, p);
+  }
+  return p;
+}
+
+type AccountsProvider = { request: (args: { method: string; params?: unknown }) => Promise<unknown> };
+
+export type PayMethod = "passkey" | "browser";
+export type Payer = { method: PayMethod; address: Hex };
+
+/** Whether this invoice's fees are sponsored when paid with a passkey. */
+export const passkeySponsored = (chain: Chain) => chain.testnet === true;
+
+export function hasBrowserWallet() {
+  return typeof window !== "undefined" && !!window.ethereum;
+}
+
+export async function connectPayer(chain: Chain, method: PayMethod): Promise<Payer> {
+  if (method === "browser") {
+    const { address } = await connectWallet(chain);
+    return { method, address };
+  }
+  const provider = await passkeyProvider(chain);
+  const res = (await provider.request({ method: "wallet_connect" })) as { accounts: ({ address: Hex } | Hex)[] };
+  const first = res.accounts[0];
+  const address = typeof first === "string" ? first : first?.address;
+  if (!address) throw new Error("Tempo Wallet returned no account.");
+  return { method, address };
+}
+
+/** One Tempo transaction holding one call: transferWithMemo, memo = billet id. */
+export async function payAs(payer: Payer, chain: Chain, token: Hex, to: Hex, amount: bigint, memo: Hex): Promise<Hex> {
+  if (payer.method === "browser") return payWithMemo(chain, token, to, amount, memo);
+  const provider = await passkeyProvider(chain);
+  const data = encodeFunctionData({ abi: Abis.tip20, functionName: "transferWithMemo", args: [to, amount, memo] });
+  const hash = (await provider.request({
+    method: "eth_sendTransaction",
+    params: [{ from: payer.address, calls: [{ to: token, data }], ...(passkeySponsored(chain) ? { feePayer: true } : {}) }],
+  })) as Hex;
   const receipt = await createPublicClient({ chain, transport: http() }).waitForTransactionReceipt({ hash });
   if (receipt.status !== "success") throw new Error(`The payment reverted: ${hash}`);
   return hash;

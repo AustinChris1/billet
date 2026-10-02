@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, Eye, EyeOff, KeyRound, Link2, Share2, Wallet, Coins, Fuel } from "lucide-react";
+import { ArrowRight, Check, Eye, EyeOff, Fingerprint, KeyRound, Link2, Share2, Coins, Fuel } from "lucide-react";
 import { decodeLink, stablecoins, symbolOf, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Mark, Serial, Stamp } from "../components/paper.tsx";
 import { SiteFooter, SiteHeader, TempoLogo, ZcashLogo } from "../components/site.tsx";
@@ -314,7 +314,7 @@ export function Landing() {
             </p>
             <ul className="mt-9 space-y-5">
               {[
-                { icon: Wallet, title: "Any EVM wallet", body: "MetaMask or any wallet that can add Tempo. No ZEC, no Zcash wallet." },
+                { icon: Fingerprint, title: "Pay with a passkey", body: "Face ID or a fingerprint through Tempo Wallet, or MetaMask if they prefer. No ZEC, no Zcash wallet." },
                 { icon: Coins, title: "The coin they already hold", body: `On mainnet: ${mainnet.join(", ")}. Billet shows their balance in each.` },
                 { icon: Fuel, title: "No gas token", body: "Tempo takes the network fee from the stablecoin being sent." },
                 { icon: Share2, title: "Share anywhere", body: "Copy, WhatsApp, email or the phone's share sheet. The link is the invoice." },

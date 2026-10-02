@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
-import { buildZip321 } from "@siwz/core";
 import { Copy as CopyIcon, KeyRound, Link2, Mail, MessageCircle, QrCode, Share2, Smartphone } from "lucide-react";
 import { createPublicClient, http, type Chain } from "viem";
 import { tempo, tempoModerato } from "viem/chains";
@@ -15,6 +14,7 @@ import {
   MEMO_MAX_BYTES,
   newNonce,
   sealFromTxid,
+  zip321,
   stablecoins,
   watchForSeal,
   withProxies,
@@ -98,7 +98,7 @@ export function IssuePage() {
 
   useEffect(() => {
     if (!pending || !issuer) return;
-    const request = buildZip321({ address: issuer.address, amount: SEAL_AMOUNT_ZEC, memo: pending.memo, label: "Billet seal" });
+    const request = zip321({ address: issuer.address, amount: SEAL_AMOUNT_ZEC, memo: pending.memo, label: "Billet seal" });
     setUri(request);
     // Low error correction keeps a long memo request scannable: fewer, larger modules.
     QRCode.toDataURL(request, { margin: 2, scale: 6, color: { dark: "#1a1915", light: "#fcfbf6" }, errorCorrectionLevel: "L" }).then(setQr);

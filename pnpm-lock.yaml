@@ -49,9 +49,6 @@ importers:
       '@fontsource/gloock':
         specifier: ^5.3.0
         version: 5.3.0
-      '@siwz/core':
-        specifier: ^0.2.3
-        version: 0.2.3
       '@zcashcommunitygrants/webzjs-wallet':
         specifier: workspace:*
         version: link:../vendor/webzjs-wallet
@@ -280,9 +277,6 @@ packages:
 
   '@scure/bip39@1.6.0':
     resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
-
-  '@siwz/core@0.2.3':
-    resolution: {integrity: sha512-lzjmJK3Swn9rj/WH+YaV0mQ9UQ98W/Yk3D37ufCN1PXrDHkMK6Hxr0S1j68T30MQe3tREIvnreLeuYVuwSNHeg==}
 
   '@stripe/stripe-js@9.13.0':
     resolution: {integrity: sha512-/0c72BUgzzVkVTlsw5uBn8x3waTdVJ/PZGfQ6jY1eu6K7olUPf4d9lgDPA9/0sIdsR8j7o3QIG8fOCO6ItcL7A==}
@@ -1136,12 +1130,6 @@ snapshots:
 
   '@scure/bip39@1.6.0':
     dependencies:
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.6
-
-  '@siwz/core@0.2.3':
-    dependencies:
-      '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

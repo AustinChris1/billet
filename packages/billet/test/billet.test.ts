@@ -96,3 +96,11 @@ test("an invoice can accept any listed USD stablecoin", async () => {
   assert.equal(symbolOf(42431, "0x20C0000000000000000000000000000000000001"), "AlphaUSD");
   assert.throws(() => decodeInvoice(memo.replace("token=USD", "token=EUR")), InvoiceError);
 });
+
+test("ZIP 321 request carries the invoice as a base64url memo", async () => {
+  const { zip321 } = await import("../src/zip321.ts");
+  const uri = zip321({ address: "u1abc", amount: "0.0001", memo: "BILLET/1\nfrom=Ada", label: "Billet seal" });
+  assert.equal(uri, "zcash:u1abc?amount=0.0001&memo=QklMTEVULzEKZnJvbT1BZGE&label=Billet%20seal");
+  assert.throws(() => zip321({ address: "t1abc", amount: "0.0001", memo: "x" }), /shielded/);
+  assert.throws(() => zip321({ address: "u1abc", amount: "0.0001", memo: "x".repeat(513) }), /512/);
+});

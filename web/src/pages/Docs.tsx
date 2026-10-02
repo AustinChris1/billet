@@ -1,13 +1,13 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useParams } from "react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteFooter, SiteHeader } from "../components/site.tsx";
 import { stablecoins } from "@billet/core";
 
 
 function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="scroll-mt-24 pt-14 text-[1.9rem] leading-tight tracking-[-0.02em] first:pt-0">
+    <h2 id={id} className="scroll-mt-20 pt-14 lg:scroll-mt-28 text-[1.9rem] leading-tight tracking-[-0.02em] first:pt-0">
       {children}
     </h2>
   );
@@ -23,7 +23,7 @@ function Steps({ items }: { items: ReactNode[] }) {
     <ol className="mt-4 space-y-3">
       {items.map((it, i) => (
         <li key={i} className="grid grid-cols-[2rem_1fr] gap-2 leading-[1.65] text-ink/85">
-          <span className="typed font-bold text-serial">{i + 1}.</span>
+          <span className="typed font-bold text-zec-ink">{i + 1}.</span>
           <span>{it}</span>
         </li>
       ))}
@@ -298,11 +298,124 @@ n=0123456789abcdef`}</Pre>
 
 const href = (slug: string) => (slug ? `/docs/${slug}` : "/docs");
 
+type Section = { id: string; title: string };
+
+/** Phones: a slim bar pinned to the top while reading. Tap it to jump to any docs page or any section of this one. */
+function MobileDocsNav({ slug, sections }: { slug: string; sections: Section[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const index = PAGES.findIndex((p) => p.slug === slug);
+  const page = PAGES[index]!;
+  const prev = PAGES[index - 1];
+  const next = PAGES[index + 1];
+
+  useEffect(() => setOpen(false), [slug]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="sticky top-0 z-30 border-y border-line bg-paper/95 backdrop-blur-md lg:hidden">
+      <div className="flex items-center gap-1 px-2 py-1.5">
+        {prev ? (
+          <Link to={href(prev.slug)} aria-label={`Previous: ${prev.title}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink">
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+        ) : (
+          <span className="w-10 shrink-0" />
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls="docs-menu"
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 hover:bg-surface"
+        >
+          <span className="form-label shrink-0 text-muted">Docs</span>
+          <span className="truncate font-[600]">{page.title}</span>
+          <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+        </button>
+        {next ? (
+          <Link to={href(next.slug)} aria-label={`Next: ${next.title}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink">
+            <ChevronRight className="h-5 w-5" />
+          </Link>
+        ) : (
+          <span className="w-10 shrink-0" />
+        )}
+      </div>
+      {open && (
+        <nav id="docs-menu" aria-label="Docs pages" className="max-h-[70dvh] overflow-y-auto border-t border-line bg-paper px-4 pt-3 pb-5 shadow-[0_24px_40px_-24px_#00000059]">
+          <div className="form-label text-muted">Pages</div>
+          <ul className="mt-2 space-y-0.5">
+            {PAGES.map((p, i) => (
+              <li key={p.slug}>
+                <Link
+                  to={href(p.slug)}
+                  aria-current={p.slug === slug ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-[10px] px-3 py-2.5 ${p.slug === slug ? "bg-surface font-[650] text-ink" : "text-muted hover:bg-surface hover:text-ink"}`}
+                >
+                  <span className="typed w-5 text-[0.8rem] text-muted">{i + 1}</span>
+                  {p.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {sections.length > 1 && (
+            <>
+              <div className="form-label mt-5 text-muted">On this page</div>
+              <ul className="mt-2 space-y-0.5">
+                {sections.map((s) => (
+                  <li key={s.id}>
+                    <a
+                      href={`#${s.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpen(false);
+                        // Scroll once the menu has closed, so its removal cannot cancel the smooth scroll.
+                        requestAnimationFrame(() =>
+                          requestAnimationFrame(() => {
+                            const el = document.getElementById(s.id);
+                            const bar = ref.current?.getBoundingClientRect().height ?? 0;
+                            if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - bar - 16, behavior: "smooth" });
+                            history.replaceState(null, "", `#${s.id}`);
+                          }),
+                        );
+                      }}
+                      className="block rounded-[10px] px-3 py-2 text-muted hover:bg-surface hover:text-ink"
+                    >
+                      {s.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </nav>
+      )}
+    </div>
+  );
+}
+
 export function Docs() {
   const { slug = "" } = useParams();
   useEffect(() => {
     window.scrollTo({ top: 0 });
-    document.querySelector("[data-active-tab]")?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [slug]);
+  const article = useRef<HTMLElement>(null);
+  const [sections, setSections] = useState<Section[]>([]);
+  useEffect(() => {
+    const hs = article.current?.querySelectorAll<HTMLHeadingElement>("h2[id]") ?? [];
+    setSections([...hs].map((h) => ({ id: h.id, title: h.textContent ?? "" })));
   }, [slug]);
   const index = PAGES.findIndex((p) => p.slug === slug);
   if (index < 0) return <Navigate to="/docs" replace />;
@@ -312,28 +425,14 @@ export function Docs() {
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md">
+      <header className="z-30 bg-paper/90 lg:sticky lg:top-0 lg:border-b lg:border-line lg:backdrop-blur-md">
         <SiteHeader />
-        <nav aria-label="Docs pages" className="overflow-x-auto border-t border-rule lg:hidden">
-          <ul className="flex w-max gap-1 px-4 py-2 text-[0.88rem]">
-            {PAGES.map((p) => (
-              <li key={p.slug}>
-                <Link
-                  to={href(p.slug)}
-                  data-active-tab={p.slug === slug ? "" : undefined}
-                  className={`block rounded-[3px] px-3 py-1.5 whitespace-nowrap ${p.slug === slug ? "bg-ink font-[650] text-sheet" : "text-sheet-ink hover:text-ink"}`}
-                >
-                  {p.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </header>
+      <MobileDocsNav slug={slug} sections={sections} />
 
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-24 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-8 pb-24 sm:px-8 lg:pt-10 lg:grid-cols-[13rem_minmax(0,1fr)]">
         <aside className="hidden lg:block">
-          <nav aria-label="Docs pages" className="sticky top-36">
+          <nav aria-label="Docs pages" className="sticky top-28">
             <div className="form-label text-sheet-ink">Docs</div>
             <ul className="mt-3 space-y-1.5 text-[0.93rem]">
               {PAGES.map((p) => (
@@ -350,7 +449,7 @@ export function Docs() {
           </nav>
         </aside>
 
-        <article className="min-w-0 max-w-[44rem]">
+        <article ref={article} className="min-w-0 max-w-[44rem]">
           {page.body()}
           <nav className="mt-16 grid gap-3 border-t border-rule pt-6 sm:grid-cols-2" aria-label="Previous and next">
             {prev ? (

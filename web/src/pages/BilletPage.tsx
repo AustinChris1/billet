@@ -8,7 +8,7 @@ import { SiteHeader } from "../components/site.tsx";
 import { Sunburst } from "../components/art.tsx";
 import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
-import { connectPayer, fundFromFaucet, hasBrowserWallet, passkeySponsored, payAs, tokenBalance, type Payer, type PayMethod } from "../lib/tempo.ts";
+import { connectPayer, feeHeadroom, fundFromFaucet, hasBrowserWallet, passkeySponsored, payAs, paysOwnFee, tokenBalance, type Payer, type PayMethod } from "../lib/tempo.ts";
 import { TamperTest } from "../components/TamperTest.tsx";
 
 const longDate = (iso: string) =>
@@ -22,7 +22,8 @@ export function BilletPage() {
   const [paying, setPaying] = useState(false);
   const [paidAt, setPaidAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
-  const [shortBy, setShortBy] = useState<{ have: bigint; need: bigint } | null>(null);
+  // fee: what the payer needs on top of the invoice when the network fee comes out of the coin they send.
+  const [shortBy, setShortBy] = useState<{ have: bigint; need: bigint; fee: bigint } | null>(null);
   const [payToken, setPayToken] = useState<`0x${string}` | null>(null);
   const [balances, setBalances] = useState<Record<string, bigint> | null>(null);
   const [faucet, setFaucet] = useState<"idle" | "sending" | "sent">("idle");
@@ -59,8 +60,9 @@ export function BilletPage() {
     const entries = await Promise.all(accepted.map(async (tk) => [tk.address, await tokenBalance(chain, tk.address, p.address)] as const));
     const bal: Record<string, bigint> = Object.fromEntries(entries);
     setBalances(bal);
+    const f = paysOwnFee(p, chain) ? await feeHeadroom(chain) : 0n;
     if (!payToken) {
-      const enough = accepted.find((tk) => (bal[tk.address] ?? 0n) >= owed);
+      const enough = accepted.find((tk) => (bal[tk.address] ?? 0n) >= owed + f);
       if (enough) setPayToken(enough.address);
     }
   }
@@ -102,9 +104,10 @@ export function BilletPage() {
     setError(null);
     setShortBy(null);
     try {
-      const have = await tokenBalance(chain, selected, payer.address);
-      if (have < owed) {
-        setShortBy({ have, need: owed });
+      const [have, f] = await Promise.all([tokenBalance(chain, selected, payer.address), paysOwnFee(payer, chain) ? feeHeadroom(chain) : Promise.resolve(0n)]);
+      // Check the fee too: a wallet holding exactly the invoice amount would otherwise sign and then revert.
+      if (have < owed + f) {
+        setShortBy({ have, need: owed, fee: f });
         return;
       }
       await payAs(payer, chain, selected as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
@@ -307,7 +310,8 @@ export function BilletPage() {
               </div>
               {shortBy && (
                 <p role="alert" className="mt-4 max-w-[60ch] text-[0.95rem] font-[600] text-serial">
-                  This wallet has {usd(shortBy.have)} in {selected ? symbolOf(inv.chainId, selected) : "that token"} and the invoice needs {usd(shortBy.need)}.
+                  This wallet has {usd(shortBy.have)} in {selected ? symbolOf(inv.chainId, selected) : "that token"}. The invoice needs {usd(shortBy.need)}
+                  {shortBy.fee > 0n ? ", plus less than a cent for the network fee, which comes out of the coin you send." : "."}
                   {testnet ? " Get test stablecoins below, then pay again." : accepted.length > 1 ? " Pick a stablecoin you hold, or add some on Tempo." : " Add some on Tempo, then pay again."}
                   {!testnet && payer?.method === "passkey" && (
                     <>

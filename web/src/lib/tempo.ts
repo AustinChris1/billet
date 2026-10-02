@@ -127,3 +127,17 @@ export async function payAs(payer: Payer, chain: Chain, token: Hex, to: Hex, amo
   if (receipt.status !== "success") throw new Error(`The payment reverted: ${hash}`);
   return hash;
 }
+
+/**
+ * What a payer must hold on top of the invoice when the fee comes out of the coin sent.
+ * A transferWithMemo used about 283k gas on Tempo; gas is priced in attodollars (18 decimals),
+ * TIP-20 amounts in 6, so the fee in token units is gas x price / 1e12. Doubled for headroom.
+ */
+export async function feeHeadroom(chain: Chain): Promise<bigint> {
+  const price = await createPublicClient({ chain, transport: http() }).getGasPrice();
+  const units = (300_000n * price * 2n) / 10n ** 12n;
+  return units > 1_000n ? units : 1_000n;
+}
+
+/** True when this payer pays the network fee out of the invoice coin. */
+export const paysOwnFee = (payer: Payer, chain: Chain) => !(payer.method === "passkey" && passkeySponsored(chain));

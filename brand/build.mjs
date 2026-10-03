@@ -109,7 +109,7 @@ const images = [
       <div class="abs" style="left:110px;top:120px;width:820px">
         <div class="kicker" style="font-size:24px">Building for the Crypto World's Fair</div>
         <div class="serif" style="font-size:92px;line-height:1.02;margin-top:24px">Private invoice.<br><span style="color:${C.muted}">Public payment.</span><br>One link.</div>
-        <div style="font-size:31px;line-height:1.45;color:${C.muted};margin-top:34px;width:740px">The invoice is sealed in one shielded Zcash note. The client pays in any USD stablecoin on Tempo. The link proves both, then becomes the receipt.</div>
+        <div style="font-size:31px;line-height:1.45;color:${C.muted};margin-top:34px;width:740px">The invoice is sealed in one shielded Zcash note. The client pays on Tempo in OUSD, USDT0, USDC.e or pathUSD. The link proves both, then becomes the receipt.</div>
         <div style="margin-top:48px">${chains(34, 36)}</div>
       </div>
       <div class="abs phone" style="width:380px;right:150px;top:70px;transform:rotate(3deg)"><img src="${src("receipt-dark.png")}"></div>`),
@@ -124,7 +124,7 @@ const images = [
       <svg class="abs" style="left:0;top:0" width="1600" height="900"><path d="M260 509 H1340" stroke="${C.zec}" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/></svg>
       ${[
         ["01", `<span style="width:64px;height:64px;display:block">${ZEC}</span>`, "Seal on Zcash", "The invoice text goes into one shielded Zcash note, from the issuer's own wallet."],
-        ["02", `<span style="width:64px;height:64px;display:block">${TEMPO()}</span>`, "Pay on Tempo", "The client pays in any USD stablecoin. The payment memo is a hash of the invoice."],
+        ["02", `<span style="width:64px;height:64px;display:block">${TEMPO()}</span>`, "Pay on Tempo", "The client pays in OUSD, USDT0, USDC.e or pathUSD. The memo is a hash of the invoice."],
         ["03", `<span class="seal" style="width:70px;height:70px;display:block">${seal}</span>`, "One link proves both", "It carries a proof for that one note, not a viewing key. Anyone can check it."],
       ]
         .map(

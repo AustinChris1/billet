@@ -17,7 +17,7 @@ Also: anyone the issuer or payer hands the link to (an accountant, an auditor), 
 
 ## Product Purpose
 
-Billet is a private dollar invoice. The invoice text (who, for what, how much, pay where) is sealed in one shielded Zcash note. The client pays OUSD on Tempo with the invoice's id as the transfer memo. One link is both the invoice and the receipt: it carries a delivery proof of that one note, checks it against the chain in the browser, then shows whether the Tempo payment with that id has arrived. Success: an invoice that is verifiable, payable in one click, and shows nothing to anyone without the link.
+Billet is a private invoice, paid in dollars. The invoice text (who, for what, how much, pay where) is sealed in one shielded Zcash note. The client pays OUSD on Tempo with the invoice's id as the transfer memo. One link is both the invoice and the receipt: it carries a delivery proof of that one note, checks it against the chain in the browser, then shows whether the Tempo payment with that id has arrived. Success: an invoice that is verifiable, payable in one click, and shows nothing to anyone without the link.
 
 ## Positioning
 

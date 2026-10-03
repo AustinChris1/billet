@@ -10,7 +10,16 @@
         document.documentElement.dataset.theme = t === "light" || t === "dark" ? t : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       } catch (e) {}
     </script>
-    <meta name="description" content="Billet: a private dollar invoice. The invoice is sealed in one shielded Zcash note, paid in any USD stablecoin on Tempo, and its link proves both without a key." />
+    <meta name="description" content="Billet: a private invoice, paid in dollars. The invoice is sealed in one shielded Zcash note, paid in any USD stablecoin on Tempo, and its link proves both without a key." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Billet" />
+    <meta property="og:title" content="Billet: private invoice, public payment, one link" />
+    <meta property="og:description" content="The invoice is sealed in one shielded Zcash note and paid in dollars on Tempo. One link proves both." />
+    <meta property="og:image" content="https://billet-zec.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://billet-zec.vercel.app/og.png" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <title>Billet</title>
   </head>

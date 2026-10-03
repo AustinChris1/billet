@@ -79,7 +79,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
   { slug: "", title: "Overview", body: () => (<>
           <H2 id="overview">Overview</H2>
           <P>
-            Billet is a private dollar invoice. You write an invoice, seal it in one shielded Zcash note, and send your client a link. The
+            Billet is a private invoice, paid in dollars. You write an invoice, seal it in one shielded Zcash note, and send your client a link. The
             link opens that invoice in their browser, lets them pay it on Tempo in any USD stablecoin you accept, and then serves as the receipt.
           </P>
           <P>

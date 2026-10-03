@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Check, Clock, Copy as CopyIcon, ExternalLink, RotateCcw } from "lucide-react";
 import { billetId, decodeInvoice, paymentStatus, toUnits, type SealedInvoice } from "@billet/core";
@@ -106,7 +107,12 @@ export function Ledger({ refreshKey, onRepeat }: { refreshKey?: unknown; onRepea
                 </button>
               )}
               <button
-                onClick={() => navigator.clipboard.writeText(r.url).then(() => setCopied(r.url))}
+                onClick={() =>
+                  navigator.clipboard.writeText(r.url).then(() => {
+                    setCopied(r.url);
+                    toast.success("Link copied");
+                  })
+                }
                 className="text-sheet-ink hover:text-carbon"
                 aria-label={`Copy link for ${r.work}`}
               >

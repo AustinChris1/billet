@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useParams } from "react-router";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Globe, Monitor, Wallet } from "lucide-react";
 import { SiteFooter, SiteHeader } from "../components/site.tsx";
 import { stablecoins } from "@billet/core";
 
@@ -64,6 +64,70 @@ function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
     </div>
   );
 }
+function Node({ title, children, tone = "plain" }: { title: string; children: ReactNode; tone?: "plain" | "zec" }) {
+  return (
+    <div className={`rounded-[12px] border p-3.5 ${tone === "zec" ? "border-zec/60 bg-zec/10" : "border-line bg-card"}`}>
+      <div className="text-[0.93rem] font-[650]">{title}</div>
+      <div className="mt-1 text-[0.84rem] leading-snug text-muted">{children}</div>
+    </div>
+  );
+}
+function Lane({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[16px] border border-line bg-surface/60 p-3.5">
+      <div className="form-label flex items-center gap-2 text-muted">
+        {icon}
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+function Joint() {
+  return (
+    <div className="flex items-center justify-center text-zec-ink" aria-hidden="true">
+      <ArrowDown className="h-5 w-5 lg:hidden" />
+      <ArrowRight className="hidden h-5 w-5 lg:block" />
+    </div>
+  );
+}
+function ArchDiagram() {
+  return (
+    <figure className="mt-6">
+      <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
+        <Lane icon={<Monitor className="h-3.5 w-3.5" />} title="Issuer's browser">
+          <Node title="Billet app">Writes the invoice text and builds the ZIP 321 request shown as a QR.</Node>
+          <Node title="Sealing address (WebZjs)">
+            Created in the browser. Spending key discarded; viewing key kept in local storage to find the note and make its proof.
+          </Node>
+          <Node title="Zcash wallet (Zodl)">Scans the QR and sends 0.0001 ZEC with the invoice as the memo.</Node>
+        </Lane>
+        <Joint />
+        <Lane icon={<Globe className="h-3.5 w-3.5" />} title="Public networks">
+          <Node title="Zcash mainnet" tone="zec">
+            One shielded note. Its memo is the invoice; nobody can read it without a proof or a key.
+          </Node>
+          <Node title="Light wallet servers">Public gRPC-web endpoints that serve raw Zcash transactions and blocks. Read only.</Node>
+          <Node title="Tempo">
+            TIP-20 <Code>transferWithMemo</Code> to the issuer. Memo = keccak256 of the invoice text. Public by design.
+          </Node>
+        </Lane>
+        <Joint />
+        <Lane icon={<Wallet className="h-3.5 w-3.5" />} title="Anyone with the link">
+          <Node title="Billet app">Fetches the transaction, checks the proof in WebAssembly, shows the invoice, finds the payment.</Node>
+          <Node title="Tempo Wallet or browser wallet">Signs one transfer with a passkey, or any EIP-1193 wallet.</Node>
+          <Node title="The link">
+            <Code>/b#t=txid&p=zdp:1:proof</Code>. The part after # never leaves the browser.
+          </Node>
+        </Lane>
+      </div>
+      <figcaption className="mt-3 text-[0.85rem] text-muted">
+        Vercel serves static files only: no API, no database. Every check runs in the reader's browser against public chain data.
+      </figcaption>
+    </figure>
+  );
+}
+
 function Case({ who, children }: { who: string; children: ReactNode }) {
   return (
     <div className="mt-5 bg-canary/55 p-5">
@@ -145,6 +209,79 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
             payment made for one invoice can never be shown as paying another.
           </P>
 
+  </>) },
+  { slug: "architecture", title: "Architecture", body: () => (<>
+          <H2 id="parts">Architecture</H2>
+          <P>
+            Billet has no backend. The app is static files; the invoice lives on Zcash, the payment on Tempo, and the link is the only
+            thing that connects them for a reader. Each browser does its own checking.
+          </P>
+          <ArchDiagram />
+
+          <H2 id="flow">Data flow</H2>
+          <Steps
+            items={[
+              <>
+                <strong>Write.</strong> The issuer's browser encodes the invoice as canonical text (at most 512 bytes) with a random value
+                <Code>n</Code>, so its hash cannot be guessed. The billet id is <Code>keccak256</Code> of that text.
+              </>,
+              <>
+                <strong>Seal.</strong> The browser shows a ZIP 321 request: 0.0001 ZEC to the sealing address, memo = invoice. The issuer's
+                own Zcash wallet sends it as a shielded note.
+              </>,
+              <>
+                <strong>Find and prove.</strong> The browser asks light wallet servers for each new block's transactions and tries them
+                against the sealing address's viewing key in WebAssembly. When the note appears, zcash-delivery-proof makes a proof for
+                that one note, and the link is built from the transaction id and the proof.
+              </>,
+              <>
+                <strong>Open.</strong> A reader's browser fetches the transaction by id, checks the proof against its bytes, and reads the
+                memo. If the proof or the link was altered, this fails here.
+              </>,
+              <>
+                <strong>Pay.</strong> The payer signs one TIP-20 <Code>transferWithMemo</Code> to the pay-to address, with the billet id
+                as the memo, from Tempo Wallet (passkey) or a browser wallet.
+              </>,
+              <>
+                <strong>Match.</strong> The reader's browser asks Tempo for transfers to the pay-to address, in the accepted stablecoins,
+                with memo = billet id, scanning from the block recorded in the invoice. Enough received means PAID.
+              </>,
+            ]}
+          />
+
+          <H2 id="who-sees-what">Who can see what</H2>
+          <Table
+            head={["Party", "Sees", "Does not see"]}
+            rows={[
+              ["Everyone (Zcash)", "An encrypted transaction", "The invoice, the amount, the parties"],
+              ["Everyone (Tempo)", "The payment: amount, both addresses, billet id", "The invoice text behind the id"],
+              ["Anyone holding the link", "That invoice, word for word, and its payment", "Your wallet, balance or other invoices"],
+              ["Vercel (hosting)", "That someone loaded a page", "The link's #fragment, so no invoice and no proof"],
+              ["Light wallet servers", "Which Zcash transaction a browser fetched, and its IP", "What the note says"],
+              ["Tempo RPC", "The address and billet id a browser looked up", "The invoice text"],
+              ["Billet (the project)", "Nothing", "Billet runs no server that stores or sees invoices"],
+            ]}
+          />
+
+          <H2 id="code">Code layout</H2>
+          <Table
+            head={["Path", "What it does"]}
+            rows={[
+              [<Code>packages/billet/src/invoice.ts</Code>, "Invoice text format, amounts, billet id"],
+              [<Code>packages/billet/src/zip321.ts</Code>, "The sealing payment request"],
+              [<Code>packages/billet/src/lightwalletd.ts</Code>, "gRPC-web client for light wallet servers"],
+              [<Code>packages/billet/src/seal.ts</Code>, "Watches blocks for the note; proves a pasted transaction id"],
+              [<Code>packages/billet/src/verify.ts</Code>, "Opens a link and checks Tempo for the payment"],
+              [<Code>packages/billet/src/tokens.ts</Code>, "Accepted stablecoins per Tempo network"],
+              [<Code>web/src/lib/tempo.ts</Code>, "Passkey and browser-wallet payments, balances, fee check"],
+              [<Code>web/src/lib/zcash.ts</Code>, "Creates the sealing address with WebZjs"],
+              [<Code>vendor/</Code>, "zcash-delivery-proof (unmodified) and a view-only WebZjs build"],
+            ]}
+          />
+          <P>
+            One browser rule shapes the app: WebZjs needs cross-origin isolation, which blocks wallet popups. So only the Write page
+            (<Code>/new</Code>) is isolated; every other page is not, so Tempo Wallet can open from the pay page.
+          </P>
   </>) },
   { slug: "use-cases", title: "Use cases", body: () => (<>
           <H2 id="use-cases">Use cases</H2>

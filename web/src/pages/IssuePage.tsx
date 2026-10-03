@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
+import { toast } from "sonner";
 import { Copy as CopyIcon, KeyRound, Link2, Mail, MessageCircle, QrCode, Share2, Smartphone } from "lucide-react";
 import { createPublicClient, http, type Chain } from "viem";
 import { tempo, tempoModerato } from "viem/chains";
@@ -94,6 +95,7 @@ export function IssuePage() {
     addIssued({ url, memo, at: new Date().toISOString() });
     savePending(null);
     setIssuedVersion((v) => v + 1);
+    toast.success("Sealed on Zcash", { description: "Your link is ready to send." });
   }
 
   useEffect(() => {
@@ -129,8 +131,10 @@ export function IssuePage() {
     try {
       const { address } = await connectWallet(chain);
       setForm((f) => ({ ...f, payTo: address }));
+      toast.success("Pay-to address filled from your wallet");
     } catch (err) {
       setError((err as Error).message);
+      toast.error("Could not read your wallet", { description: (err as Error).message });
     }
   }
 
@@ -154,7 +158,9 @@ export function IssuePage() {
       setPending(next);
     } catch (err) {
       setCreating(false);
-      setError(err instanceof InvoiceError ? err.message : (err as Error).message);
+      const msg = err instanceof InvoiceError ? err.message : (err as Error).message;
+      setError(msg);
+      toast.error("Could not start the seal", { description: msg });
     }
   }
 
@@ -185,6 +191,7 @@ export function IssuePage() {
   function repeat(r: RepeatInvoice) {
     startOver();
     setForm((f) => ({ ...f, to: r.to, work: r.work, amount: r.amount, due: inTwoWeeks() }));
+    toast(`New invoice for ${r.to} filled in`, { description: "Check the amount and due date, then seal it." });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -201,7 +208,10 @@ export function IssuePage() {
   }, [linkUrl, pending]);
 
   function copy(text: string, tag: string) {
-    navigator.clipboard.writeText(text).then(() => setCopied(tag));
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(tag);
+      toast.success(tag === "uri" ? "Payment request copied" : tag === "link" ? "Link copied" : "Copied");
+    });
   }
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));

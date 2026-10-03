@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
 import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, Fingerprint, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
@@ -76,9 +77,12 @@ export function BilletPage() {
     try {
       const p = await connectPayer(chain, method);
       setPayer(p);
+      toast.success(`Connected ${short(p.address, 4)}`);
       await loadBalances(p);
     } catch (err) {
-      setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
+      const msg = err instanceof Error ? err.message.split("\n")[0]! : String(err);
+      setError(msg);
+      toast.error("Could not connect", { description: msg });
     } finally {
       setConnecting(null);
     }
@@ -94,9 +98,12 @@ export function BilletPage() {
       setShortBy(null);
       await loadBalances(payer);
       setFaucet("sent");
+      toast.success("Test stablecoins sent", { description: "Pick a coin and pay." });
     } catch (err) {
       setFaucet("idle");
-      setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
+      const msg = err instanceof Error ? err.message.split("\n")[0]! : String(err);
+      setError(msg);
+      toast.error("The faucet did not answer", { description: msg });
     }
   }
 
@@ -112,10 +119,16 @@ export function BilletPage() {
         setShortBy({ have, need: owed, fee: f });
         return;
       }
-      await payAs(payer, chain, selected as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
+      const hash = await payAs(payer, chain, selected as Hex, sealed.invoice.payTo as Hex, owed, sealed.id);
+      toast.success(`Paid ${usd(owed)} in ${symbolOf(sealed.invoice.chainId, selected)}`, {
+        description: "This link is now the receipt.",
+        action: { label: "View", onClick: () => window.open(tempoExplorer(chain, hash), "_blank", "noreferrer") },
+      });
       await refreshPayment(sealed);
     } catch (err) {
-      setError(err instanceof Error ? err.message.split("\n")[0]! : String(err));
+      const msg = err instanceof Error ? err.message.split("\n")[0]! : String(err);
+      setError(msg);
+      toast.error("Payment did not go through", { description: msg });
     } finally {
       setPaying(false);
     }
@@ -308,7 +321,12 @@ export function BilletPage() {
                   </a>
                 )}
                 <button
-                  onClick={() => navigator.clipboard.writeText(window.location.href).then(() => setCopied(true))}
+                  onClick={() =>
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                      setCopied(true);
+                      toast.success(status?.paid ? "Receipt link copied" : "Link copied");
+                    })
+                  }
                   className="inline-flex items-center gap-1.5 text-[0.95rem] font-[650] text-canary-ink underline hover:text-carbon"
                 >
                   {copied ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}

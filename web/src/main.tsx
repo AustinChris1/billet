@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import { Toaster } from "sonner";
 import "./styles.css";
 import { Landing } from "./pages/Landing.tsx";
 import { BilletPage } from "./pages/BilletPage.tsx";
@@ -25,5 +26,20 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    {/* Styled from the theme tokens, so toasts follow light and dark mode on their own. */}
+    <Toaster
+      position="bottom-center"
+      gap={8}
+      toastOptions={{
+        style: {
+          background: "var(--card)",
+          color: "var(--ink)",
+          border: "1px solid var(--line-strong)",
+          borderRadius: "14px",
+          fontFamily: "var(--font-form)",
+          boxShadow: "var(--shadow)",
+        },
+      }}
+    />
   </StrictMode>,
 );

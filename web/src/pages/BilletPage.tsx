@@ -38,6 +38,8 @@ export function BilletPage() {
   const selected = payToken ?? accepted[0]?.address ?? null;
   const tokenLabel = accepted.length > 1 ? "Any USD stablecoin" : (accepted[0]?.symbol ?? "USD stablecoin");
   const owed = status ? status.due - status.received : 0n;
+  // Paying from the account being paid moves nothing; the wallet refuses or the money goes in a circle.
+  const paysItself = !!payer && !!inv && payer.address.toLowerCase() === inv.payTo.toLowerCase();
 
   useEffect(() => {
     if (!payment || !chain) return;
@@ -99,7 +101,7 @@ export function BilletPage() {
   }
 
   async function pay() {
-    if (!sealed || !chain || !payer || !selected) return;
+    if (!sealed || !chain || !payer || !selected || paysItself) return;
     setPaying(true);
     setError(null);
     setShortBy(null);
@@ -286,7 +288,12 @@ export function BilletPage() {
                     </div>
                   )}
                   <div className="mt-5">
-                    <Button onClick={pay} disabled={paying || !selected}>
+                    {paysItself && (
+                      <p role="alert" className="mb-3 max-w-[58ch] text-[0.92rem] font-[600] text-danger">
+                        This is the account the invoice pays. Tap Change and pay from a different account.
+                      </p>
+                    )}
+                    <Button onClick={pay} disabled={paying || !selected || paysItself}>
                       {paying ? <LoaderCircle className="h-4 w-4 animate-spin" /> : payer.method === "passkey" ? <Fingerprint className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
                       {paying ? (payer.method === "passkey" ? "Confirm with your passkey…" : "Confirm in your wallet…") : `Pay ${usd(owed)}${selected ? ` in ${symbolOf(inv.chainId, selected)}` : ""}`}
                     </Button>

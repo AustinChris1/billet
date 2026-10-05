@@ -11,7 +11,7 @@ const browser = await chromium.launch({ executablePath: join(root, dir, "chrome-
 const ctx = await browser.newContext({ viewport: { width: 1100, height: 1400 }, deviceScaleFactor: 2, reducedMotion: "reduce" });
 await ctx.addInitScript(() => localStorage.setItem("billet.theme", "dark"));
 const page = await ctx.newPage();
-await page.goto("https://billet-zec.vercel.app/b" + sample, { waitUntil: "networkidle" });
+await page.goto("https://billet.cash/b" + sample, { waitUntil: "networkidle" });
 await page.waitForTimeout(9000);
 await page.click("summary");
 await page.click("text=Make it 100 times bigger");

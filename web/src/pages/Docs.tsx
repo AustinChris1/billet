@@ -398,7 +398,7 @@ n=0123456789abcdef`}</Pre>
           <H3>Billet id</H3>
           <Pre>{`billetId = keccak256(utf8(invoiceText))   // the Tempo transfer memo, bytes32`}</Pre>
           <H3>Link</H3>
-          <Pre>{`https://billet-zec.vercel.app/b#t=<zcash txid>&p=zdp:1:<delivery proof>`}</Pre>
+          <Pre>{`https://billet.cash/b#t=<zcash txid>&p=zdp:1:<delivery proof>`}</Pre>
           <P>The part after # is never sent to any server, including Billet's.</P>
           <H3>Networks</H3>
           <Table

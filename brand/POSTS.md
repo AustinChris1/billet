@@ -15,7 +15,7 @@ Attach `out/posts/01-announce-1600x900.png`.
 >
 > No viewing key. No invoice database.
 >
-> billet-zec.vercel.app
+> billet.cash
 
 ## X: replies to build a thread under it (optional)
 
@@ -48,5 +48,5 @@ Post in the channel the server uses for community projects; check its rules firs
 > 2. Try to break it. Every billet has a "try to fake this invoice" test.
 > 3. Tell me what feels wrong, confusing or unsafe.
 >
-> App: billet-zec.vercel.app
+> App: billet.cash
 > Code: github.com/AustinChris1/billet

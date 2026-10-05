@@ -6,8 +6,8 @@ Your invoice is sealed in one shielded Zcash note. Your client pays it in OUSD o
 
 Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
 
-- **Live app:** https://billet-zec.vercel.app
-- **A real billet, sealed on Zcash mainnet and paid in OUSD on Tempo mainnet:** [open it](https://billet-zec.vercel.app/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Every check runs in your browser; expand "Checks and tamper test".
+- **Live app:** https://billet.cash
+- **A real billet, sealed on Zcash mainnet and paid in OUSD on Tempo mainnet:** [open it](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Every check runs in your browser; expand "Checks and tamper test".
 
 ---
 
@@ -69,9 +69,9 @@ Change one character of the invoice and its id changes, so the payment no longer
 | Sealing watcher and paste-a-txid path | Tested against a real mined transaction (`packages/billet/test/seal.test.ts`) |
 | Tempo payment found by billet id | Working on Tempo mainnet and Moderato |
 | Sealing address created in the browser with WebZjs | Working (`scripts/issuer-check.mjs`) |
-| First mainnet invoice, end to end | Sealed from Zodl on a phone in an Ironwood note at Zcash mainnet block 3,505,343; paid $10.00 in OUSD on Tempo mainnet with a Tempo Wallet passkey ([tx](https://explore.tempo.xyz/tx/0x9cd63eefb383abc3b8256d865c7d3ed2f1a9773867ec5205172a2e8d42f206e6)). [Open it](https://billet-zec.vercel.app/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw) |
-| First invoice (testnet payment) | Sealed in an Ironwood note at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet (tx `0x74d913dc…d0c6`). [Open it](https://billet-zec.vercel.app/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA) |
-| Hosted deployment | Live at https://billet-zec.vercel.app, deployed on every push to `main` |
+| First mainnet invoice, end to end | Sealed from Zodl on a phone in an Ironwood note at Zcash mainnet block 3,505,343; paid $10.00 in OUSD on Tempo mainnet with a Tempo Wallet passkey ([tx](https://explore.tempo.xyz/tx/0x9cd63eefb383abc3b8256d865c7d3ed2f1a9773867ec5205172a2e8d42f206e6)). [Open it](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw) |
+| First invoice (testnet payment) | Sealed in an Ironwood note at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet (tx `0x74d913dc…d0c6`). [Open it](https://billet.cash/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA) |
+| Hosted deployment | Live at https://billet.cash (also billet-zec.vercel.app, so older links keep working), deployed on every push to `main` |
 
 ## Repository
 

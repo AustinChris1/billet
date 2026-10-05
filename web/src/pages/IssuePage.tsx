@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
+import { ScanAddress } from "../components/ScanAddress.tsx";
 import { Copy as CopyIcon, KeyRound, Link2, Mail, MessageCircle, QrCode, Share2, Smartphone } from "lucide-react";
 import { createPublicClient, http, type Chain } from "viem";
 import { tempo, tempoModerato } from "viem/chains";
@@ -273,6 +274,12 @@ export function IssuePage() {
                       <button type="button" onClick={fillWallet} className="shrink-0 pb-1.5 text-[0.85rem] font-[650] text-carbon underline">
                         Use my wallet
                       </button>
+                      <ScanAddress
+                        onAddress={(a) => {
+                          setForm((f) => ({ ...f, payTo: a }));
+                          toast.success("Address scanned", { description: `${a.slice(0, 6)}…${a.slice(-4)}` });
+                        }}
+                      />
                     </div>
                   </label>
                   <div className="sm:col-span-2">

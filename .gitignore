@@ -6,8 +6,12 @@ dist/
 .DS_Store
 
 web/public/webzjs/
-.impeccable/review/
-.impeccable/build/
+.impeccable/
+web/.impeccable/
 keys/
 
 .vercel
+
+# Working notes kept locally, not part of the product
+PRODUCT.md
+brand/POSTS.md

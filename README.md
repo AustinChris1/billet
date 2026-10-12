@@ -2,56 +2,89 @@
 
 **Private invoice. Public payment. One link.**
 
-Your invoice is sealed in one shielded Zcash note. Your client pays it in OUSD on Tempo. The link you send proves the payment and the invoice are the same, then becomes the receipt. No invoice database. No viewing key.
-
-Built for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
+Billet lets you send an invoice and get paid in dollars on a blockchain without the details of the job becoming public. The words of the invoice (who, what work, the terms) are kept private on Zcash. Your client pays in a US dollar stablecoin on Tempo. One link holds it all together: it shows the invoice, proves it is genuine, and turns into the receipt once the payment arrives.
 
 - **Live app:** https://billet.cash
-- **A real billet, sealed on Zcash mainnet and paid in OUSD on Tempo mainnet:** [open it](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Every check runs in your browser; expand "Checks and tamper test".
+- **See a real one:** [an invoice sealed on Zcash mainnet and paid $10 on Tempo mainnet](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw)
+- **Docs:** https://billet.cash/docs
+
+Built by Austin Chris for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
 
 ---
 
 ## The problem
 
-You invoice a client and want to be paid in dollars on-chain. Today you choose between two bad options:
+Say you are a freelancer and your client pays you in dollars on a blockchain. That payment is public. If you want to show which invoice it paid, you have two bad choices:
 
-- **Put the invoice where everyone can see it.** A payment memo on a public chain, or a PDF in someone's database. Your client's name, the work and your rate become public or someone else's data.
-- **Hand over a Zcash viewing key.** It proves the payment, but it opens your whole account, every past and future payment, forever, and it cannot be revoked. Payment processors that create "a fresh address per invoice" still ask for that key up front.
+- **Make the invoice public too**, for example by writing it into the payment. Now anyone can read your client's name, the work and your rate.
+- **Share a Zcash viewing key** so someone can check it privately. But a viewing key shows your whole account: every past and future payment, forever. You cannot take it back, and anyone you give it to can leak it.
 
-## What Billet does
+Billet is a third option: prove one invoice, and nothing else.
 
-1. **Write** the invoice: who, for what, how much, pay where.
-2. **Seal** it. Your own Zcash wallet scans one QR and sends the invoice text as a shielded note to a sealing address Billet created in your browser.
-3. **Send the link.** It carries a delivery proof for that one note and the transaction id. No key.
-4. **Your client opens it.** Their browser fetches the Zcash transaction, checks the proof against its bytes, and shows the invoice word for word. They pay in OUSD on Tempo with one click. The payment's memo is the invoice's id.
-5. **The same link becomes the receipt.** It looks up the Tempo payment carrying that id. The PAID stamp only lands once the payment is found on chain.
-6. **Come back to it.** Every invoice you sealed is listed in your browser with paid or unpaid read live from Tempo, the total still owed, and one click to invoice the same client again. Links go out by WhatsApp, email or the phone's share sheet.
+## How it works, in four steps
 
-## How the pieces bind together
+1. **Write the invoice** at billet.cash/new: who it is for, the work, the amount, where to be paid.
+2. **Seal it.** Your own Zcash wallet scans a QR code and sends the invoice text in one tiny private transaction. That costs about 0.0001 ZEC plus the network fee.
+3. **Send the link** to your client by WhatsApp, email or anything else. The link carries a proof for that one transaction. It carries no key.
+4. **Your client opens it and pays.** Their browser checks the proof against the Zcash blockchain, shows the invoice word for word, and lets them pay on Tempo with a passkey (fingerprint or Face ID) or a browser wallet such as MetaMask. They need no ZEC and nothing to install. The moment the payment is found on Tempo, the same link shows **PAID** and becomes the receipt.
+
+Billet also keeps a list in your browser of every invoice you sealed, showing paid or unpaid live from Tempo, so you can follow up or bill the same client again.
+
+## Try it as a judge (2 minutes)
+
+1. Open the [real mainnet invoice](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Your browser fetches the Zcash transaction and the Tempo payment and checks both itself. No Billet server is involved.
+2. Expand **Checks and tamper test**. Change a word or the amount and watch the payment stop matching.
+3. To write your own, go to https://billet.cash/new. Sealing needs a Zcash wallet that can scan a payment QR, such as Zodl (formerly Zashi), with a little shielded ZEC. You can choose Tempo testnet to pay with free test dollars.
+
+## Why it needs both chains
+
+- **Zcash keeps the words private.** The invoice text lives inside one shielded Zcash note. Only people holding the link can read it.
+- **Tempo makes the payment the receipt.** The client pays in a dollar stablecoin, and the payment's memo is a fingerprint (hash) of the invoice text. Change one character of the invoice and the fingerprint changes, so the payment no longer matches.
+
+Neither chain can do this alone: Zcash has the privacy, Tempo has the dollar payments with memos and low fees.
+
+## What is private and what is public
+
+| | Who can see it |
+|---|---|
+| The invoice text (names, work, terms, amount) | Only people you give the link to |
+| The payment: amount, both addresses, the invoice fingerprint | Everyone, on Tempo |
+| Your other Zcash transactions | Nobody. The link proves one note and opens nothing else |
+
+To be clear about the limits:
+
+- Billet keeps the **words** private, not the dollars. The Tempo payment is an ordinary public transfer.
+- The proof shows the sealed note's value, text and receiving address. It does not show who sent it or whether it was spent later.
+- Anyone you give the link to can read that invoice. Share it as you would share the invoice itself.
+
+## Nothing to lose
+
+- **No wallet inside Billet.** The sealing address is created in your browser and its spending key is thrown away at once, so the tiny sealing amount can never move. Only its viewing key stays in your browser, to find your own invoices.
+- **No key in the link.** Links check against the blockchains forever. Clearing your browser loses nothing you have already sent.
+- **No Billet database.** There is no server holding your invoices.
+
+## Words used here
+
+- **Stablecoin:** a token worth one US dollar. Billet accepts OUSD, USDT0, USDC.e and pathUSD on Tempo mainnet.
+- **Tempo:** a blockchain built for stablecoin payments. Fees are paid in the coin being sent, under a cent.
+- **Zcash shielded note:** a private Zcash transaction. Its amount, parties and attached text are encrypted.
+- **Viewing key:** a Zcash key that reveals every transaction of an account. Billet never asks for one.
+- **Delivery proof:** a proof about one shielded note that anyone can check against the public chain with no key.
+
+---
+
+## Technical details
+
+### How the pieces bind together
 
 | | Where | Who can see it |
 |---|---|---|
 | Invoice text | Memo of one shielded Zcash note (max 512 bytes) | Anyone holding the link |
-| Proof that the text is that note's memo | `zdp:1:` delivery proof in the link | Anyone holding the link; checked against the public chain with no key |
+| Proof that the text is that note's memo | `zdp:1:` delivery proof in the link | Anyone holding the link; checked against the chain with no key |
 | Billet id | `keccak256` of the exact invoice text | Public, as the Tempo memo |
 | Payment | TIP-20 `transferWithMemo(payTo, amount, billetId)` on Tempo | Public |
 
-Change one character of the invoice and its id changes, so the payment no longer matches it.
-
-## What is public, said plainly
-
-- The Tempo payment is an ordinary public transfer: amount, both addresses and the billet id.
-- Billet keeps the words private, not the dollars.
-- A delivery proof shows the note's value, memo and receiving address. It does not show who sent it or whether it was later spent.
-- Anyone you give the link to can read that invoice. Send it like you would send the invoice itself.
-
-## Nothing to lose
-
-- **No wallet in Billet.** The sealing address's spending key is discarded the moment it is made, so the sealing dust (0.0001 ZEC) can never move again. Only its viewing key stays in your browser, to find and prove your own notes.
-- **No key in the link.** Links verify against the chain forever. Clearing the browser loses nothing already sent.
-- **The payer needs no ZEC.** TIP-20 fees are paid in the token being sent, so OUSD is all they need.
-
-## Zcash and Tempo primitives used
+### Zcash and Tempo primitives used
 
 - **ZIP 316** unified viewing key for the sealing address, derived in the browser (ChainSafe WebZjs).
 - **ZIP 32** account derivation from a seed that exists for a moment and is wiped.
@@ -59,50 +92,58 @@ Change one character of the invoice and its id changes, so the payment no longer
 - **Orchard / Ironwood shielded memo** holding the invoice text.
 - **Delivery proofs** (`zcash-delivery-proof`): one note disclosed, no viewing key.
 - **lightwalletd over gRPC-web**: raw transactions and compact blocks fetched straight from public proxies.
-- **TIP-20 `transferWithMemo`** and stablecoin-paid fees on Tempo; **OUSD** (`0x20c0000000000000000000006a37da5c996874be`).
+- **TIP-20 `transferWithMemo`** with stablecoin-paid fees on Tempo. Invoices can name one token or accept any listed USD stablecoin (`packages/billet/src/tokens.ts`; each was checked on chain to be TIP-20, 6 decimals, `currency() == "USD"`).
+- **Tempo Accounts SDK** passkey wallet for paying with a fingerprint or Face ID.
 
-## Status (4 October 2026)
+### What is working (12 October 2026)
 
 | | Status |
 |---|---|
+| First mainnet invoice, end to end | Sealed from Zodl on an Android phone in an Ironwood note at Zcash mainnet block 3,505,343; paid $10.00 in OUSD on Tempo mainnet with a Tempo Wallet passkey ([tx](https://explore.tempo.xyz/tx/0x9cd63eefb383abc3b8256d865c7d3ed2f1a9773867ec5205172a2e8d42f206e6)) |
+| First invoice, testnet payment | Sealed at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet ([open it](https://billet.cash/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA)) |
 | Delivery proof checked in the browser against Zcash mainnet | Working (`scripts/zdp-mainnet-check.mts`) |
-| Sealing watcher and paste-a-txid path | Tested against a real mined transaction (`packages/billet/test/seal.test.ts`) |
-| Tempo payment found by billet id | Working on Tempo mainnet and Moderato |
 | Sealing address created in the browser with WebZjs | Working (`scripts/issuer-check.mjs`) |
-| First mainnet invoice, end to end | Sealed from Zodl on a phone in an Ironwood note at Zcash mainnet block 3,505,343; paid $10.00 in OUSD on Tempo mainnet with a Tempo Wallet passkey ([tx](https://explore.tempo.xyz/tx/0x9cd63eefb383abc3b8256d865c7d3ed2f1a9773867ec5205172a2e8d42f206e6)). [Open it](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw) |
-| First invoice (testnet payment) | Sealed in an Ironwood note at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet (tx `0x74d913dc…d0c6`). [Open it](https://billet.cash/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA) |
-| Hosted deployment | Live at https://billet.cash (also billet-zec.vercel.app, so older links keep working), deployed on every push to `main` |
+| Seal watcher and paste-a-transaction-id fallback | Tested against a real mined transaction (`packages/billet/test/seal.test.ts`) |
+| Tempo payment found by billet id | Working on Tempo mainnet and Moderato testnet |
+| Pay with a passkey or a browser wallet, in any accepted USD stablecoin | Working |
+| Invoice list with live paid or unpaid status | Working, stored only in the issuer's browser |
+| Tests | 13 passing (`pnpm test`) |
+| Hosting | https://billet.cash, deployed on every push to `main` (billet-zec.vercel.app still serves older links) |
 
-## Repository
+### Repository
 
 ```
-packages/billet   invoice codec, billet id, links, gRPC-web lightwalletd client, seal watcher, payment check
-web               Vite + React app: landing, /new (write and seal), /b (invoice and receipt)
+packages/billet   invoice codec, billet id, links, stablecoin list, gRPC-web lightwalletd client, seal watcher, payment check
+web               Vite + React app: landing, /new (write and seal), /b (invoice and receipt), /docs
 vendor            zcash-delivery-proof WASM (Apache-2.0, unmodified) and a view-only WebZjs build
-scripts           mainnet and browser checks, WebZjs static sync
+scripts           mainnet and browser checks, WebZjs static sync, icons
+brand             logo, social images and the scripts that render them
 ```
 
-### Run it
+### Run it locally
+
+You need Node.js 22 or newer and pnpm.
 
 ```sh
 pnpm install
-pnpm test          # invoice codec, proof library and sealing tests (11)
+pnpm test          # invoice codec, proof library and sealing tests
 pnpm dev:web       # http://localhost:5173
 ```
 
-`web/.env.example` lists the options. `VITE_CHAIN=moderato` makes new invoices payable on Tempo testnet; `tempo` makes them payable on mainnet.
+`web/.env.example` lists the options. `VITE_CHAIN=moderato` makes new invoices payable on Tempo testnet by default; `tempo` makes them payable on mainnet. Issuers can switch per invoice.
 
 ### The view-only WebZjs build
 
-Billet only reads, so it ships a build of WebZjs ([ZcashCommunityGrants/WebZjs](https://github.com/ZcashCommunityGrants/WebZjs), commit in `vendor/webzjs-UPSTREAM_COMMIT`) with the Sapling proving parameters compiled out behind a `prover` feature. The WASM goes from 60 MB to 5 MB. The patch is `vendor/webzjs-view-only.patch`.
+Billet only reads from Zcash, so it ships a build of WebZjs ([ZcashCommunityGrants/WebZjs](https://github.com/ZcashCommunityGrants/WebZjs), commit in `vendor/webzjs-UPSTREAM_COMMIT`) with the Sapling proving parameters compiled out behind a `prover` feature. The WASM goes from 60 MB to 5 MB. The patch is `vendor/webzjs-view-only.patch`.
 
 ## Prior work, disclosed
 
 - **zcash-delivery-proof** by saplingcash: the proof format and its WebAssembly verifier, vendored unmodified (`vendor/zcash-delivery-proof`, Apache-2.0, see its `NOTICE`). Billet builds the invoice, the link, the sealing flow and the Tempo binding on top of it. The library is version 0.1.0 and not yet independently reviewed.
+- **ChainSafe WebZjs**, used through the view-only build described above.
 - Everything else in this repository was written during the hackathon, from 30 September 2026.
 
-## Neighbours
+## Related projects
 
 - **zcash-delivery-proof**: the proof Billet uses.
-- **zeceipt**: source-of-funds dossiers for shielded ZEC (same hackathon track).
-- **CipherPay**: shielded ZEC checkout for merchants; it asks for a viewing key, Billet does not.
+- **zeceipt**: source-of-funds reports for shielded ZEC (same hackathon track).
+- **CipherPay**: shielded ZEC checkout for merchants. It asks the merchant for a viewing key; Billet does not.

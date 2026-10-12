@@ -16,11 +16,11 @@ const QA: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "What do I need to send an invoice?",
-    a: "A Zcash wallet that scans payment QR codes (Zodl, formerly Zashi, for example) with a little ZEC: 0.0001 ZEC plus the network fee per invoice. And a Tempo address to be paid at.",
+    a: "A Zcash wallet that scans payment QR codes (Zodl, formerly Zashi, for example) with a little ZEC: 0.00001 ZEC plus the network fee per invoice. And a Tempo address to be paid at.",
   },
   {
     q: "Does Billet ever hold my money or my keys?",
-    a: "No. The payment goes straight from your client to your Tempo address. Billet never asks for your wallet's seed or viewing key. The sealing address it creates has no spending key at all, so even the 0.0001 ZEC sealing note can never move again.",
+    a: "No. The payment goes straight from your client to your Tempo address. Billet never asks for your wallet's seed or viewing key. The sealing address it creates has no spending key at all, so even the 0.00001 ZEC sealing note can never move again.",
   },
   {
     q: "What if I clear my browser or lose my laptop?",

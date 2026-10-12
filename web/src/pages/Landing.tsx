@@ -341,7 +341,7 @@ export function Landing() {
               <p className="mt-4 leading-relaxed text-muted">
                 The words of the invoice: who, for what, how much, pay where. Sealed in one shielded note that only the link can open.
               </p>
-              <p className="mt-4 font-[family-name:var(--font-mono)] text-[0.8rem] text-zec-ink">0.0001 ZEC plus the network fee, once per invoice, paid by the issuer</p>
+              <p className="mt-4 font-[family-name:var(--font-mono)] text-[0.8rem] text-zec-ink">0.00001 ZEC plus the network fee, once per invoice, paid by the issuer</p>
             </div>
             <div className="bg-card p-7 sm:p-9">
               <div className="flex items-center gap-3">

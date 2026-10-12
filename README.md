@@ -5,7 +5,7 @@
 Billet lets you send an invoice and get paid in dollars on a blockchain without the details of the job becoming public. The words of the invoice (who, what work, the terms) are kept private on Zcash. Your client pays in a US dollar stablecoin on Tempo. One link holds it all together: it shows the invoice, proves it is genuine, and turns into the receipt once the payment arrives.
 
 - **Live app:** https://billet.cash
-- **See a real one:** [an invoice sealed on Zcash mainnet and paid $10 on Tempo mainnet](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw)
+- **See a real one:** [an invoice sealed on Zcash mainnet and paid $10 on Tempo mainnet](https://billet.cash/b#3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw)
 - **Docs:** https://billet.cash/docs
 
 Built by Austin Chris for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
@@ -24,7 +24,7 @@ Billet is a third option: prove one invoice, and nothing else.
 ## How it works, in four steps
 
 1. **Write the invoice** at billet.cash/new: who it is for, the work, the amount, where to be paid.
-2. **Seal it.** Your own Zcash wallet scans a QR code and sends the invoice text in one tiny private transaction. That costs about 0.0001 ZEC plus the network fee.
+2. **Seal it.** Your own Zcash wallet scans a QR code and sends the invoice text in one tiny private transaction. That costs about 0.00001 ZEC plus the network fee.
 3. **Send the link** to your client by WhatsApp, email or anything else. The link carries a proof for that one transaction. It carries no key.
 4. **Your client opens it and pays.** Their browser checks the proof against the Zcash blockchain, shows the invoice word for word, and lets them pay on Tempo with a passkey (fingerprint or Face ID) or a browser wallet such as MetaMask. They need no ZEC and nothing to install. The moment the payment is found on Tempo, the same link shows **PAID** and becomes the receipt.
 
@@ -32,7 +32,7 @@ Billet also keeps a list in your browser of every invoice you sealed, showing pa
 
 ## Try it as a judge (2 minutes)
 
-1. Open the [real mainnet invoice](https://billet.cash/b#t=17a720643488410373bed5997ed66e1f84b97315bf2bb07990c9037fc6489cdc&p=zdp:1:3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Your browser fetches the Zcash transaction and the Tempo payment and checks both itself. No Billet server is involved.
+1. Open the [real mainnet invoice](https://billet.cash/b#3JxIxn8DyZB5sCu_FXO5hB9u1n6Z1b5zA0GINGQgpxcCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAACaMZU03qTIae9TEhf87dhy3Mfx6wQT7AbKn4YVWUNdhw). Your browser fetches the Zcash transaction and the Tempo payment and checks both itself. No Billet server is involved.
 2. Expand **Checks and tamper test**. Change a word or the amount and watch the payment stop matching.
 3. To write your own, go to https://billet.cash/new. Sealing needs a Zcash wallet that can scan a payment QR, such as Zodl (formerly Zashi), with a little shielded ZEC. You can choose Tempo testnet to pay with free test dollars.
 
@@ -100,7 +100,7 @@ To be clear about the limits:
 | | Status |
 |---|---|
 | First mainnet invoice, end to end | Sealed from Zodl on an Android phone in an Ironwood note at Zcash mainnet block 3,505,343; paid $10.00 in OUSD on Tempo mainnet with a Tempo Wallet passkey ([tx](https://explore.tempo.xyz/tx/0x9cd63eefb383abc3b8256d865c7d3ed2f1a9773867ec5205172a2e8d42f206e6)) |
-| First invoice, testnet payment | Sealed at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet ([open it](https://billet.cash/b#t=756a9ae760ee69f0d5f9b77635a5cfb8f313a34e2c395b5f2ee79f786ea2618d&p=zdp:1:jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA)) |
+| First invoice, testnet payment | Sealed at Zcash mainnet block 3,502,568 from Zodl; paid with `transferWithMemo` on Tempo testnet ([open it](https://billet.cash/b#jWGibnif5y5fWzksTqMT87jPpTV2t_nV8GnuYOeaanUCAQAb7PC8sZ7Wy11cIen_oAst_mZrjj64XjraDv-kjUCoVpBqE8IfQCQmMIyWECcAAAAAAAAPMY-Mra-uN3vWxN7aRlfLaHPiJLB-2058tr_gTu2BpA)) |
 | Delivery proof checked in the browser against Zcash mainnet | Working (`scripts/zdp-mainnet-check.mts`) |
 | Sealing address created in the browser with WebZjs | Working (`scripts/issuer-check.mjs`) |
 | Seal watcher and paste-a-transaction-id fallback | Tested against a real mined transaction (`packages/billet/test/seal.test.ts`) |

@@ -20,7 +20,7 @@ export const lightwalletdProxies: string[] = (
   .filter(Boolean);
 
 /** Value of the sealing note. The issuer address has no spending key, so this dust is never moved again. */
-export const SEAL_AMOUNT_ZEC = "0.0001";
+export const SEAL_AMOUNT_ZEC = "0.00001";
 
 export const zcashExplorer = (txid: string) => `https://mainnet.zcashexplorer.app/transactions/${txid}`;
 export const tempoExplorer = (chain: Chain, tx: string) => `${chain.blockExplorers?.default.url}/tx/${tx}`;

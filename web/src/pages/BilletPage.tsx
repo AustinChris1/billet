@@ -140,7 +140,7 @@ export function BilletPage() {
         <Copy className="mx-auto max-w-xl p-8">
           <h1 className="text-2xl">This link holds no billet.</h1>
           <p className="mt-3 text-canary-ink">
-            A billet link ends in <span className="typed">#t=…&amp;p=zdp:1:…</span>. The part after the # never reaches any server, so
+            A billet link ends in <span className="typed">#</span> and a long proof. The part after the # never reaches any server, so
             check that the whole link was copied.
           </p>
           <div className="mt-6">

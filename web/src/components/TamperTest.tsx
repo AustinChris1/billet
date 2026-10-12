@@ -12,11 +12,13 @@ function inflate(memo: string) {
   return memo.replace(/^amount=([\d.]+) USD$/m, (_, a: string) => `amount=${(Number(a) * 100).toString()} USD`);
 }
 
-/** The same link with one character of the proof changed. */
+/** The same link with one character of the proof changed, past the txid it starts with. */
 function tamperedLink() {
   const href = window.location.href;
-  const at = href.indexOf("zdp:1:") + 12;
-  if (at < 12) return href;
+  const old = href.indexOf("zdp:1:");
+  const start = old >= 0 ? old + 6 : href.indexOf("#") + 1;
+  const at = start + 60;
+  if (start < 1 || at >= href.length) return href;
   const c = href[at]!;
   return href.slice(0, at) + (c === "A" ? "B" : "A") + href.slice(at + 1);
 }

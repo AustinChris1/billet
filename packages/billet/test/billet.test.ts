@@ -70,10 +70,16 @@ test("amounts convert to 6-decimal TIP-20 units", () => {
   assert.equal(toUnits("12.000001"), 12_000_001n);
 });
 
-test("links carry a proof and a txid, never a key", () => {
-  const link = { proof: "zdp:1:WXvYf_frFEgV", txid: "6ef95d7ee48af136d33196e510712b916a6d15498f75c1154814ebf77fd87b59" };
-  assert.deepEqual(decodeLink(encodeLink(link)), link);
+test("links carry a proof, never a key, and the txid comes from the proof", () => {
+  const v = JSON.parse(readFileSync(new URL("../../../vendor/zcash-delivery-proof/test-vectors/mainnet.json", import.meta.url), "utf8"));
+  const link = { proof: v.proof as string, txid: v.txid as string };
+  const short = encodeLink(link);
+  assert.equal(short, "#" + v.proof.slice(6), "the short link is the proof alone");
+  assert.deepEqual(decodeLink(short), link);
+  assert.deepEqual(decodeLink(`#t=${v.txid}&p=${v.proof}`), link, "links in the first form keep working");
+  assert.throws(() => encodeLink({ ...link, txid: "00".repeat(32) }), /bad billet link/);
   assert.equal(decodeLink("#k=uview1abc&t=6ef9"), null);
+  assert.equal(decodeLink("#short"), null);
 });
 
 test("the delivery-proof library authenticates the memo text Billet hashes", () => {

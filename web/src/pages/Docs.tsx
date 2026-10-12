@@ -100,7 +100,7 @@ function ArchDiagram() {
           <Node title="Sealing address (WebZjs)">
             Created in the browser. Spending key discarded; viewing key kept in local storage to find the note and make its proof.
           </Node>
-          <Node title="Zcash wallet (Zodl)">Scans the QR and sends 0.0001 ZEC with the invoice as the memo.</Node>
+          <Node title="Zcash wallet (Zodl)">Scans the QR and sends 0.00001 ZEC with the invoice as the memo.</Node>
         </Lane>
         <Joint />
         <Lane icon={<Globe className="h-3.5 w-3.5" />} title="Public networks">
@@ -117,7 +117,7 @@ function ArchDiagram() {
           <Node title="Billet app">Fetches the transaction, checks the proof in WebAssembly, shows the invoice, finds the payment.</Node>
           <Node title="Tempo Wallet or browser wallet">Signs one transfer with a passkey, or any EIP-1193 wallet.</Node>
           <Node title="The link">
-            <Code>/b#t=txid&p=zdp:1:proof</Code>. The part after # never leaves the browser.
+            <Code>/b#proof</Code>. The proof starts with the Zcash txid. The part after # never leaves the browser.
           </Node>
         </Lane>
       </div>
@@ -187,7 +187,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
                 pay. Billet writes this as plain text, at most 512 bytes.
               </>,
               <>
-                <strong>Seal.</strong> Billet shows a ZIP 321 payment request as a QR code. Your Zcash wallet scans it and sends 0.0001 ZEC
+                <strong>Seal.</strong> Billet shows a ZIP 321 payment request as a QR code. Your Zcash wallet scans it and sends 0.00001 ZEC
                 with the invoice text as the memo, to a sealing address Billet created in your browser.
               </>,
               <>
@@ -226,7 +226,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
                 <Code>n</Code>, so its hash cannot be guessed. The billet id is <Code>keccak256</Code> of that text.
               </>,
               <>
-                <strong>Seal.</strong> The browser shows a ZIP 321 request: 0.0001 ZEC to the sealing address, memo = invoice. The issuer's
+                <strong>Seal.</strong> The browser shows a ZIP 321 request: 0.00001 ZEC to the sealing address, memo = invoice. The issuer's
                 own Zcash wallet sends it as a shielded note.
               </>,
               <>
@@ -324,7 +324,7 @@ const PAGES: { slug: string; title: string; body: () => ReactNode }[] = [
                 address are remembered for next time.
               </>,
               <>
-                Click <strong>Seal it on Zcash</strong> and scan the QR with your wallet. Confirm the 0.0001 ZEC payment; the memo is your
+                Click <strong>Seal it on Zcash</strong> and scan the QR with your wallet. Confirm the 0.00001 ZEC payment; the memo is your
                 invoice.
               </>,
               <>
@@ -398,7 +398,10 @@ n=0123456789abcdef`}</Pre>
           <H3>Billet id</H3>
           <Pre>{`billetId = keccak256(utf8(invoiceText))   // the Tempo transfer memo, bytes32`}</Pre>
           <H3>Link</H3>
-          <Pre>{`https://billet.cash/b#t=<zcash txid>&p=zdp:1:<delivery proof>`}</Pre>
+          <Pre>{`https://billet.cash/b#<delivery proof, base64url; its first 32 bytes are the Zcash txid>
+
+First form, still accepted:
+https://billet.cash/b#t=<zcash txid>&p=zdp:1:<delivery proof>`}</Pre>
           <P>The part after # is never sent to any server, including Billet's.</P>
           <H3>Networks</H3>
           <Table

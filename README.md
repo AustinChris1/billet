@@ -10,6 +10,8 @@ Billet lets you send an invoice and get paid in dollars on a blockchain without 
 
 Built by Austin Chris for Colosseum's Crypto World's Fair (Zcash and Tempo tracks).
 
+<p align="center"><img src="brand/out/posts/02-how-it-works-1600x900.png" alt="How Billet works: seal on Zcash, pay on Tempo, one link proves both" width="820"></p>
+
 ---
 
 ## The problem
@@ -29,6 +31,17 @@ Billet is a third option: prove one invoice, and nothing else.
 4. **Your client opens it and pays.** Their browser checks the proof against the Zcash blockchain, shows the invoice word for word, and lets them pay on Tempo with a passkey (fingerprint or Face ID) or a browser wallet such as MetaMask. They need no ZEC and nothing to install. The moment the payment is found on Tempo, the same link shows **PAID** and becomes the receipt.
 
 Billet also keeps a list in your browser of every invoice you sealed, showing paid or unpaid live from Tempo, so you can follow up or bill the same client again.
+
+<table>
+<tr>
+<td align="center" width="50%"><b>Write and seal</b></td>
+<td align="center" width="50%"><b>The same link, now the receipt</b></td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="web/public/shots/new-dark.png"><img src="web/public/shots/new-light.png" alt="The Write an invoice page"></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="web/public/shots/receipt-dark.png"><img src="web/public/shots/receipt-light.png" alt="A paid billet: Austin paid Billet $10.00, stamped PAID on Tempo"></picture></td>
+</tr>
+</table>
 
 ## Try it as a judge (2 minutes)
 
@@ -75,12 +88,57 @@ To be clear about the limits:
 
 ## Technical details
 
+### Architecture
+
+Three things, bound together with no server and no key:
+
+```mermaid
+flowchart LR
+    subgraph ZC["Zcash mainnet (private)"]
+        N["One shielded note<br/>memo = invoice text"]
+    end
+    subgraph LK["The link (never sent to a server)"]
+        L["Delivery proof for that note<br/>no viewing key"]
+    end
+    subgraph TP["Tempo (public)"]
+        P["transferWithMemo<br/>memo = keccak256 of invoice text"]
+    end
+    L -- "proves the text is that note's memo" --> N
+    N -- "hash of the exact text" --> P
+```
+
+The whole flow, from writing to the receipt:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor I as Issuer
+    participant BI as Billet, issuer's browser
+    participant Z as Zcash
+    actor C as Client
+    participant BC as Billet, client's browser
+    participant T as Tempo
+    I->>BI: Write the invoice
+    BI->>BI: Create a receive-only sealing address, discard its spending key
+    BI-->>I: QR code: ZIP 321 request, invoice text as the memo
+    I->>Z: Own wallet sends 0.00001 ZEC in one shielded note
+    BI->>Z: Find the note with the sealing viewing key
+    BI-->>I: Link: billet.cash/b + delivery proof
+    I->>C: Send the link by WhatsApp, email or anything else
+    C->>BC: Open the link
+    BC->>Z: Fetch the transaction over gRPC-web
+    BC->>BC: Check the proof, show the invoice word for word
+    C->>T: Pay in a USD stablecoin, memo = keccak256(invoice text)
+    BC->>T: Look up the payment carrying that memo
+    BC-->>C: PAID: the link is now the receipt
+```
+
 ### How the pieces bind together
 
 | | Where | Who can see it |
 |---|---|---|
 | Invoice text | Memo of one shielded Zcash note (max 512 bytes) | Anyone holding the link |
-| Proof that the text is that note's memo | `zdp:1:` delivery proof in the link | Anyone holding the link; checked against the chain with no key |
+| Proof that the text is that note's memo | Delivery proof, the whole link fragment (its first 32 bytes are the Zcash txid) | Anyone holding the link; checked against the chain with no key |
 | Billet id | `keccak256` of the exact invoice text | Public, as the Tempo memo |
 | Payment | TIP-20 `transferWithMemo(payTo, amount, billetId)` on Tempo | Public |
 
@@ -142,8 +200,6 @@ Billet only reads from Zcash, so it ships a build of WebZjs ([ZcashCommunityGran
 - **ChainSafe WebZjs**, used through the view-only build described above.
 - Everything else in this repository was written during the hackathon, from 30 September 2026.
 
-## Related projects
+## How Billet differs
 
-- **zcash-delivery-proof**: the proof Billet uses.
-- **zeceipt**: source-of-funds reports for shielded ZEC (same hackathon track).
-- **CipherPay**: shielded ZEC checkout for merchants. It asks the merchant for a viewing key; Billet does not.
+Zcash payment tools such as CipherPay ask the merchant for a viewing key so they can confirm payments. Billet never asks for one: the link proves one note and nothing else, and the payment itself happens in dollars on Tempo.

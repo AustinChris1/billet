@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "react-router";
 import { createPublicClient, http, type Hex } from "viem";
-import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, Fingerprint, LoaderCircle, ShieldCheck, Wallet } from "lucide-react";
+import { Check, ChevronDown, Copy as CopyIcon, Droplet, ExternalLink, Fingerprint, LoaderCircle, Printer, ShieldCheck, Wallet } from "lucide-react";
 import { acceptedTokens, decodeLink, symbolOf, toUnits } from "@billet/core";
 import { Button, CheckLine, Copy, Serial, Stamp } from "../components/paper.tsx";
 import { SiteHeader } from "../components/site.tsx";
@@ -11,6 +11,7 @@ import { chainById, tempoExplorer, zcashExplorer } from "../lib/config.ts";
 import { explain, short, usd, useBillet } from "../lib/useBillet.ts";
 import { connectPayer, feeHeadroom, fundFromFaucet, hasBrowserWallet, passkeySponsored, payAs, paysOwnFee, tokenBalance, type Payer, type PayMethod } from "../lib/tempo.ts";
 import { TamperTest } from "../components/TamperTest.tsx";
+import { PrintReceipt } from "../components/PrintReceipt.tsx";
 
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -156,7 +157,9 @@ export function BilletPage() {
   const amount = inv ? usd(toUnits(inv.amount)) : "";
 
   return (
-    <Frame>
+    <>
+      {sealed && <PrintReceipt sealed={sealed} status={status} chain={chain} paidAt={paidAt} verified={verified} />}
+      <Frame className={sealed ? "print:hidden" : ""}>
       <Copy
         className="mx-auto max-w-3xl"
         stub={
@@ -332,6 +335,15 @@ export function BilletPage() {
                   {copied ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
                   {copied ? "Copied" : status?.paid ? "Copy receipt link" : "Copy link"}
                 </button>
+                <button
+                  onClick={() => window.print()}
+                  disabled={!verified}
+                  title={verified ? undefined : "Available once the checks finish"}
+                  className="inline-flex items-center gap-1.5 text-[0.95rem] font-[650] text-canary-ink underline hover:text-carbon disabled:no-underline disabled:opacity-50"
+                >
+                  <Printer className="h-4 w-4" />
+                  {status?.paid ? "Print or save receipt as PDF" : "Print or save as PDF"}
+                </button>
               </div>
               {shortBy && (
                 <p role="alert" className="mt-4 max-w-[60ch] text-[0.95rem] font-[600] text-serial">
@@ -420,13 +432,14 @@ export function BilletPage() {
           </div>
         </details>
       </Copy>
-    </Frame>
+      </Frame>
+    </>
   );
 }
 
-export function Frame({ children }: { children: React.ReactNode }) {
+export function Frame({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-x-clip">
+    <div className={`relative flex min-h-dvh flex-col overflow-x-clip ${className}`}>
       <Sunburst className="pointer-events-none absolute top-[-14rem] right-[-16rem] w-[44rem] opacity-60" inner={170} />
       <SiteHeader />
       <main className="relative flex-1 px-4 pt-4 pb-20 sm:px-8">{children}</main>

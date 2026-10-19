@@ -28,7 +28,7 @@ Billet is a third option: prove one invoice, and nothing else.
 1. **Write the invoice** at billet.cash/new: who it is for, the work, the amount, where to be paid.
 2. **Seal it.** Your own Zcash wallet scans a QR code and sends the invoice text in one tiny private transaction. That costs about 0.00001 ZEC plus the network fee.
 3. **Send the link** to your client by WhatsApp, email or anything else. The link carries a proof for that one transaction. It carries no key.
-4. **Your client opens it and pays.** Their browser checks the proof against the Zcash blockchain, shows the invoice word for word, and lets them pay on Tempo with a passkey (fingerprint or Face ID) or a browser wallet such as MetaMask. They need no ZEC and nothing to install. The moment the payment is found on Tempo, the same link shows **PAID** and becomes the receipt.
+4. **Your client opens it and pays.** Their browser checks the proof against the Zcash blockchain, shows the invoice word for word, and lets them pay on Tempo with a passkey (fingerprint or Face ID) or a browser wallet such as MetaMask. They need no ZEC and nothing to install. The moment the payment is found on Tempo, the same link shows **PAID** and becomes the receipt. Either side can print it or save it as a PDF for their records, with a QR code that lets anyone re-check it.
 
 Billet also keeps a list in your browser of every invoice you sealed, showing paid or unpaid live from Tempo, so you can follow up or bill the same client again.
 
@@ -165,6 +165,7 @@ sequenceDiagram
 | Tempo payment found by billet id | Working on Tempo mainnet and Moderato testnet |
 | Pay with a passkey or a browser wallet, in any accepted USD stablecoin | Working |
 | Invoice list with live paid or unpaid status | Working, stored only in the issuer's browser |
+| Printable receipt (print or save as PDF), with full transaction details and a QR code back to the link | Working |
 | Tests | 13 passing (`pnpm test`) |
 | Hosting | https://billet.cash, deployed on every push to `main` (billet-zec.vercel.app still serves older links) |
 

@@ -190,3 +190,19 @@
     stroke-dashoffset: -1000;
   }
 }
+
+/* Printing a billet: only the paper receipt (PrintReceipt), on white. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 16mm 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #231015 !important;
+  }
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+}

@@ -143,12 +143,105 @@ const images = [
       </div>
       <img class="abs" src="${src("tamper-dark.png")}" style="width:690px;right:110px;top:115px;border-radius:24px;box-shadow:0 40px 90px -30px #000,0 0 0 1px #ffffff1a">`),
   ],
+
+  // ---- X series, one every few days
+  [
+    "posts/04-one-invoice-1600x900.png", 1600, 900,
+    base(1600, 900, `
+      <div class="abs" style="left:110px;top:150px;width:660px">
+        <div class="kicker" style="font-size:24px">The problem</div>
+        <div class="serif" style="font-size:84px;line-height:1.03;margin-top:22px">Share one invoice, not your whole account.</div>
+        <div style="font-size:29px;line-height:1.45;color:${C.muted};margin-top:30px">To prove one Zcash payment today, you hand over a viewing key. Billet sends a link that proves one invoice and nothing else.</div>
+      </div>
+      ${[
+        ["A viewing key", "#1e181b", "#f4f2ee1f", C.muted, "#e5484d", "×", ["Every past payment", "Every future payment", "Cannot be taken back"]],
+        ["A Billet link", "#2a2112", "#f3b72466", C.ink, C.zec, "✓", ["One invoice", "Checked against the chain", "Opens nothing else"]],
+      ]
+        .map(
+          ([t, bg, line, ink, mark, glyph, rows], i) => `<div class="abs" style="left:880px;top:${160 + i * 330}px;width:610px;padding:34px 40px;border-radius:24px;background:${bg};border:1.5px solid ${line}">
+            <div style="font-size:34px;font-weight:600;color:${ink}">${t}</div>
+            ${rows.map((r) => `<div style="display:flex;align-items:center;gap:16px;font-size:28px;color:${ink};margin-top:16px"><span style="width:34px;height:34px;border-radius:99px;background:${mark};color:${C.bg};display:grid;place-items:center;font-size:22px;font-weight:700">${glyph}</span>${r}</div>`).join("")}
+          </div>`,
+        )
+        .join("")}`),
+  ],
+  [
+    "posts/05-private-public-1600x900.png", 1600, 900,
+    base(1600, 900, `
+      <div class="abs" style="left:110px;top:90px">
+        <div class="kicker" style="font-size:24px">What anyone can see</div>
+        <div class="serif" style="font-size:84px;line-height:1.03;margin-top:18px">Private words. Public receipt.</div>
+      </div>
+      <div class="abs" style="left:110px;top:330px;width:670px;height:460px;padding:44px;border-radius:26px;background:#1e181b;border:1.5px solid #f3b72466">
+        <div style="display:flex;align-items:center;gap:18px"><span style="width:58px;height:58px;display:block">${ZEC}</span><div><div class="kicker" style="font-size:18px">Private</div><div style="font-size:36px;font-weight:600">On Zcash</div></div></div>
+        ${["Who it is for", "What the work was", "The terms and due date"].map((r) => `<div style="font-size:31px;margin-top:26px;padding-bottom:20px;border-bottom:1px solid #f4f2ee1a">${r}</div>`).join("")}
+        <div style="font-size:24px;color:${C.muted};margin-top:24px">Only people you give the link to</div>
+      </div>
+      <div class="abs" style="left:820px;top:330px;width:670px;height:460px;padding:44px;border-radius:26px;background:${C.paper};color:${C.aub}">
+        <div style="display:flex;align-items:center;gap:18px"><span style="width:58px;height:58px;display:block">${TEMPO(C.paper, C.aub)}</span><div><div style="font-size:18px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a6d1a">Public</div><div style="font-size:36px;font-weight:600">On Tempo</div></div></div>
+        ${["The dollar amount", "Both addresses", "The invoice fingerprint (a hash)"].map((r) => `<div style="font-size:31px;margin-top:26px;padding-bottom:20px;border-bottom:1px solid #2310151f">${r}</div>`).join("")}
+        <div style="font-size:24px;color:#6b5a5f;margin-top:24px">Everyone, like any payment</div>
+      </div>`),
+  ],
+  [
+    "posts/06-no-zec-needed-1600x900.png", 1600, 900,
+    base(1600, 900, `
+      <div class="abs" style="width:1200px;height:1200px;right:-420px;top:-160px">${sunburst({ inner: 160, opacity: 0.8 })}</div>
+      <div class="abs" style="left:110px;top:130px;width:800px">
+        <div class="kicker" style="font-size:24px">For the person paying</div>
+        <div class="serif" style="font-size:88px;line-height:1.03;margin-top:22px">Your client<br>needs no ZEC.</div>
+        <div style="font-size:30px;line-height:1.45;color:${C.muted};margin-top:30px;width:720px">They open the link, read the invoice and pay in a dollar stablecoin on Tempo, with a fingerprint, Face ID or a browser wallet. Nothing to install. The network fee comes out of the coin they send.</div>
+        <div style="display:flex;gap:16px;margin-top:44px">
+          ${["OUSD", "USDT0", "USDC.e", "pathUSD"].map((c) => `<span class="mono" style="font-size:28px;padding:12px 24px;border-radius:14px;background:#ffffff10;border:1.5px solid #f4f2ee26">${c}</span>`).join("")}
+        </div>
+      </div>
+      <div class="seal abs" style="width:230px;height:230px;right:250px;top:330px;transform:rotate(-12deg);filter:drop-shadow(0 24px 30px #000b)">${seal}</div>`),
+  ],
+  [
+    "posts/07-first-mainnet-1600x900.png", 1600, 900,
+    base(1600, 900, `
+      <div class="abs" style="left:110px;top:110px;width:780px">
+        <div class="kicker" style="font-size:24px">On mainnet</div>
+        <div class="serif" style="font-size:86px;line-height:1.03;margin-top:22px">The first one is real.</div>
+        ${[
+          ["Sealed", "Zcash mainnet, block 3,505,343"],
+          ["Paid", "$10.00 in OUSD on Tempo mainnet"],
+          ["With", "A passkey, on an Android phone"],
+          ["Checked", "In the reader's browser, no server"],
+        ]
+          .map(([k, v]) => `<div style="display:flex;gap:26px;align-items:baseline;margin-top:30px"><span class="kicker" style="font-size:20px;width:130px;flex-shrink:0">${k}</span><span style="font-size:32px">${v}</span></div>`)
+          .join("")}
+      </div>
+      <div class="abs phone" style="width:400px;right:150px;top:70px;transform:rotate(3deg)"><img src="${src("receipt-dark.png")}"></div>`),
+  ],
+  [
+    "posts/08-nothing-to-lose-1600x900.png", 1600, 900,
+    base(1600, 900, `
+      <div class="abs" style="left:110px;top:100px">
+        <div class="kicker" style="font-size:24px">How Billet is built</div>
+        <div class="serif" style="font-size:84px;line-height:1.03;margin-top:18px">Nothing to hold. Nothing to lose.</div>
+      </div>
+      ${[
+        ["No wallet inside Billet", "The sealing address's spending key is thrown away the moment it is made."],
+        ["No key in the link", "The link carries a proof for one note. It checks against the chain forever."],
+        ["No invoice database", "Billet keeps no copy of your invoices. The chains are the record."],
+      ]
+        .map(
+          ([t, b], i) => `<div class="abs" style="left:${110 + i * 465}px;top:400px;width:440px;height:390px;padding:38px;border-radius:24px;background:#1e181b;border:1px solid #f4f2ee1f">
+            <span class="seal" style="width:62px;height:62px;display:block">${seal}</span>
+            <div style="font-size:35px;font-weight:600;margin-top:26px;line-height:1.15">${t}</div>
+            <div style="font-size:26px;line-height:1.45;color:${C.muted};margin-top:14px">${b}</div></div>`,
+        )
+        .join("")}`),
+  ],
 ];
 
 const root = join(homedir(), "AppData/Local/ms-playwright");
 const dir = readdirSync(root).filter((d) => d.startsWith("chromium_headless_shell-")).sort().pop();
 const browser = await chromium.launch({ executablePath: join(root, dir, "chrome-headless-shell-win64/chrome-headless-shell.exe") });
-for (const [name, w, h, html, opts = {}] of images) {
+// Render a subset: node brand/build.mjs posts/04
+const only = process.argv[2];
+for (const [name, w, h, html, opts = {}] of images.filter(([n]) => !only || n.includes(only))) {
   const file = new URL(name, out);
   mkdirSync(new URL("./", file), { recursive: true });
   const tmp = new URL(`./.render.html`, here);

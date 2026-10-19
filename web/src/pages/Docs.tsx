@@ -434,6 +434,34 @@ https://billet.cash/b#t=<zcash txid>&p=zdp:1:<delivery proof>`}</Pre>
           </ul>
 
   </>) },
+  { slug: "roadmap", title: "Roadmap", body: () => (<>
+          <H2 id="roadmap">Roadmap</H2>
+          <P>
+            Billet's one job is to prove a single financial claim and nothing more. Today it does that across two chains. This page says what is here, what comes next, and what is only being watched.
+          </P>
+
+          <H3>Now</H3>
+          <P>
+            An invoice's words sit in one shielded Zcash note. The client pays in a dollar stablecoin on Tempo, and that payment's memo is the hash of the invoice. The link carries a delivery proof for that one note, so anyone holding it can check the invoice and the payment in their browser.
+          </P>
+          <P>
+            Zcash's NU7 upgrade is targeted for 5 November 2026. Before it lands, Billet will be sealed and opened on the NU7 testnet, and the two public Zcash servers it reads will be watched through the upgrade. Notes already sealed stay valid. As of 19 October 2026 the mainnet activation height had not been published.
+          </P>
+
+          <H3>Next</H3>
+          <P>
+            A second payer, someone other than the builder. After that, a browser export of a person's own billets, if they ask for one. For a single invoice, the printable receipt is already the copy an accountant files.
+          </P>
+
+          <H3>Watching, not promised</H3>
+          <P>
+            Zcash shielded assets (ZIP 226 and ZIP 227) are still draft and are not in NU7. A private dollar payment inside Zcash would need three things at once: a real dollar token, a wallet that can attach the invoice to that note, and a proof that can check it. It would also mean the client needs a Zcash wallet, which removes today's promise that the payer needs no ZEC.
+          </P>
+          <P>
+            Tempo Zones are live for enterprises. The company that runs a Zone can see its payments, and someone holding a link cannot check a payment from outside the Zone. That conflicts with a receipt anyone can verify, so Zones are a partnership conversation, not a Billet feature.
+          </P>
+
+  </>) },
 ];
 
 const href = (slug: string) => (slug ? `/docs/${slug}` : "/docs");

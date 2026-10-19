@@ -151,7 +151,7 @@ const images = [
       <div class="abs" style="left:110px;top:150px;width:660px">
         <div class="kicker" style="font-size:24px">The problem</div>
         <div class="serif" style="font-size:84px;line-height:1.03;margin-top:22px">Share one invoice, not your whole account.</div>
-        <div style="font-size:29px;line-height:1.45;color:${C.muted};margin-top:30px">To prove one Zcash payment today, you hand over a viewing key. Billet sends a link that proves one invoice and nothing else.</div>
+        <div style="font-size:29px;line-height:1.45;color:${C.muted};margin-top:30px">A viewing key opens every past and future payment, and it can't be taken back. A Billet link opens one invoice.</div>
       </div>
       ${[
         ["A viewing key", "#1e181b", "#f4f2ee1f", C.muted, "#e5484d", "×", ["Every past payment", "Every future payment", "Cannot be taken back"]],
@@ -169,13 +169,13 @@ const images = [
     "posts/05-private-public-1600x900.png", 1600, 900,
     base(1600, 900, `
       <div class="abs" style="left:110px;top:90px">
-        <div class="kicker" style="font-size:24px">What anyone can see</div>
+        <div class="kicker" style="font-size:24px">Where each part lives</div>
         <div class="serif" style="font-size:84px;line-height:1.03;margin-top:18px">Private words. Public receipt.</div>
       </div>
       <div class="abs" style="left:110px;top:330px;width:670px;height:460px;padding:44px;border-radius:26px;background:#1e181b;border:1.5px solid #f3b72466">
         <div style="display:flex;align-items:center;gap:18px"><span style="width:58px;height:58px;display:block">${ZEC}</span><div><div class="kicker" style="font-size:18px">Private</div><div style="font-size:36px;font-weight:600">On Zcash</div></div></div>
         ${["Who it is for", "What the work was", "The terms and due date"].map((r) => `<div style="font-size:31px;margin-top:26px;padding-bottom:20px;border-bottom:1px solid #f4f2ee1a">${r}</div>`).join("")}
-        <div style="font-size:24px;color:${C.muted};margin-top:24px">Only people you give the link to</div>
+        <div style="font-size:24px;color:${C.muted};margin-top:24px">Anyone holding the link</div>
       </div>
       <div class="abs" style="left:820px;top:330px;width:670px;height:460px;padding:44px;border-radius:26px;background:${C.paper};color:${C.aub}">
         <div style="display:flex;align-items:center;gap:18px"><span style="width:58px;height:58px;display:block">${TEMPO(C.paper, C.aub)}</span><div><div style="font-size:18px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a6d1a">Public</div><div style="font-size:36px;font-weight:600">On Tempo</div></div></div>
@@ -202,7 +202,7 @@ const images = [
     base(1600, 900, `
       <div class="abs" style="left:110px;top:110px;width:780px">
         <div class="kicker" style="font-size:24px">On mainnet</div>
-        <div class="serif" style="font-size:86px;line-height:1.03;margin-top:22px">The first one is real.</div>
+        <div class="serif" style="font-size:86px;line-height:1.03;margin-top:22px">I sealed it. I paid it.</div>
         ${[
           ["Sealed", "Zcash mainnet, block 3,505,343"],
           ["Paid", "$10.00 in OUSD on Tempo mainnet"],
@@ -223,7 +223,7 @@ const images = [
       </div>
       ${[
         ["No wallet inside Billet", "The sealing address's spending key is thrown away the moment it is made."],
-        ["No key in the link", "The link carries a proof for one note. It checks against the chain forever."],
+        ["No key in the link", "The link carries a proof for one note. It checks that note against the chain."],
         ["No invoice database", "Billet keeps no copy of your invoices. The chains are the record."],
       ]
         .map(

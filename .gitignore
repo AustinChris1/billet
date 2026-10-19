@@ -15,3 +15,6 @@ keys/
 # Working notes kept locally, not part of the product
 PRODUCT.md
 brand/POSTS.md
+
+# Brand build scratch file (brand/build.mjs writes it each run)
+brand/.render.html
